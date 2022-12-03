@@ -25,30 +25,10 @@ from stable_whisper import modify_model
 from stable_whisper import load_model
 import json
 import whisper
-
-model = whisper.load_model("base")
-assert model.transcribe("dot.mp3").get("segments")
-
-model = load_model("base")
-# modified model should run just like the regular model but with additional hyperparameters and extra data in results
-results = model.transcribe("dot.mp3")
-stab_segments = results["segments"]
-first_segment_word_timestamps = stab_segments[1]["whole_word_timestamps"]
-
-print(stab_segments[0])
-for i in range(0, len(stab_segments)):
-    print(stab_segments[i]["whole_word_timestamps"])
-
-
-print("############################")
-
 from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import YouTube
-
 import pytube
 
-link = "https://www.youtube.com/watch?v=mpjREfvZiDs"
-yt = pytube.YouTube(link)
 
 # using whisper to get word timings
 # https://github.com/openai/whisper/discussions/3
@@ -65,17 +45,35 @@ class Video:
 
         stream.download("~/Documents/lang2views_project/videos")
 
+        caption = yt.captions.get_by_language_code("en")
+        print(caption.generate_srt_captions())
+
         # how to get the script
-        YouTubeTranscriptApi.get_transcript(video_id)
+        # YouTubeTranscriptApi.get_transcript("K7BVDfXdgOY")
 
         # how to know what scripts languages are avaliable
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        # transcript_list = YouTubeTranscriptApi.list_transcripts("K7BVDfXdgOY")
 
         # how to get the description
         self.description = yt.description
+        print(yt.description)
 
         # how to get the title
         self.title = yt.title
+        print(yt.title)
+
+        model = whisper.load_model("base")
+        assert model.transcribe("dot.mp3").get("segments")
+
+        model = load_model("base")
+        # modified model should run just like the regular model but with additional hyperparameters and extra data in results
+        results = model.transcribe("dot.mp3")
+        stab_segments = results["segments"]
+        first_segment_word_timestamps = stab_segments[1]["whole_word_timestamps"]
+
+        print(stab_segments[0])
+        for i in range(0, len(stab_segments)):
+            print(stab_segments[i]["whole_word_timestamps"])
 
         # we need a function that creates the scenes
         # for this we need to go word by word and see the exact time at which
@@ -85,4 +83,4 @@ class Video:
         #
 
 
-# kurts_video = Video()
+kurts_video = Video()
