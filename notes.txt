@@ -1,0 +1,26 @@
+# what functions are the most important right now?
+# 1. Create the scripts
+# 2. Auto translate the script
+# 2. Edit script (time )
+
+# so we want to create a video object that contains:
+# 1. The video
+# 2. The audio
+# 3. The script
+# 4. The title
+# 5. The description
+# 6. The voice over
+# 7. The number of voices
+
+
+# what do we have to do to create the video object
+# 1. Download the video
+# 2. Download the script
+
+
+
+
+# using whisper to get word timings
+# https://github.com/openai/whisper/discussions/3
+# https://github.com/openai/whisper/discussions/435
+
