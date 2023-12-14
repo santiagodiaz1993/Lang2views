@@ -1,0 +1,6 @@
+curl \
+  'https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=q72dA533sCg&key=[YOUR_API_KEY]' \
+  --header 'Authorization: Bearer [YOUR_ACCESS_TOKEN]' \
+  --header 'Accept: application/json' \
+  --compressed
+
