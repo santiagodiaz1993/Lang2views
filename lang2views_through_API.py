@@ -106,49 +106,105 @@ def main():
     #     text = result["text"]
     #
 
-    import os.path
+    # import os.path
 
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
-    from googleapiclient.errors import HttpError
+    # from google.auth.transport.requests import Request
+    # from google.oauth2.credentials import Credentials
+    # from google_auth_oauthlib.flow import InstalledAppFlow
+    # from googleapiclient.discovery import build
+    # from googleapiclient.errors import HttpError
 
-    # If modifying these scopes, delete the file token.json.
-    SCOPES = ["https://www.googleapis.com/auth/documents.readonly"]
+    # # If modifying these scopes, delete the file token.json.
+    # SCOPES = ["https://www.googleapis.com/auth/documents.readonly"]
 
-    # The ID of a sample document.
-    DOCUMENT_ID = "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
+    # # The ID of a sample document.
+    # DOCUMENT_ID = "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
 
-    """Shows basic usage of the Docs API.
-      Prints the title of a sample document.
-      """
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+    # """Shows basic usage of the Docs API.
+    #   Prints the title of a sample document.
+    #   """
+    # creds = None
+    # # The file token.json stores the user's access and refresh tokens, and is
+    # # created automatically when the authorization flow completes for the first
+    # # time.
+    # if os.path.exists("token.json"):
+    #     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    # # If there are no (valid) credentials available, let the user log in.
+    # if not creds or not creds.valid:
+    #     if creds and creds.expired and creds.refresh_token:
+    #         creds.refresh(Request())
+    #     else:
+    #         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+    #         creds = flow.run_local_server(port=0)
+    #     # Save the credentials for the next run
+    #     with open("token.json", "w") as token:
+    #         token.write(creds.to_json())
 
-    try:
-        service = build("docs", "v1", credentials=creds)
+    # try:
+    #     service = build("docs", "v1", credentials=creds)
 
-        # Retrieve the documents contents from the Docs service.
-        document = service.documents().get(documentId=DOCUMENT_ID).execute()
+    #     # Retrieve the documents contents from the Docs service.
+    #     document = service.documents().get(documentId=DOCUMENT_ID).execute()
 
-        print(f"The title of the document is: {document.get('title')}")
-    except HttpError as err:
-        print(err)
+    #     print(f"The title of the document is: {document.get('title')}")
+    # except HttpError as err:
+    #     print(err)
+
+    # import requests
+
+    # This code sample uses the 'requests' library:
+    # http://docs.python-requests.org
+    import requests
+    import json
+
+    # url = "https://api.trello.com/1/lists"
+
+    # query = {
+    #     "name": "{Long Format Video Localization}",
+    #     "idBoard": "651200fe3757fd7b8aec8f06",
+    #     "key": "507e54976cbef96c4b8e1b5b883f4639",
+    #     "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+    # }
+
+    # response = requests.request("POST", url, params=query)
+
+    # print(response.text)
+
+    url = "https://api.trello.com/1/cards"
+
+    headers = {"Accept": "application/json"}
+
+    # query = {
+    #     "idList": "657b55f47eb6bf3aede6aa9d",
+    #     "key": "507e54976cbef96c4b8e1b5b883f4639",
+    #     "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+    # }
+
+    # query = {
+    #     "idCardSource": "6371a8b401c60500e4c97a07",
+    #     "idList": "637182618bef42008339d7cf",
+    #     "name": "Hello",
+    #     "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
+    #     "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
+    # }
+
+    query = {
+        "key": "507e54976cbef96c4b8e1b5b883f4639",
+        "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+        "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
+        "idCardSource": "65121053765103ab051fb04a",
+        "idList": "657b55f47eb6bf3aede6aa9d",
+        "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
+        "name": "Test Template",
+    }
+
+    response = requests.request("POST", url, headers=headers, params=query)
+
+    print(
+        json.dumps(
+            json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")
+        )
+    )
 
 
 if __name__ == "__main__":
