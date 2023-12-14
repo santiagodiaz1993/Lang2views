@@ -10,67 +10,67 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import YouTube, Caption, captions, CaptionQuery
 import pytube
 
-model = whisper.load_model("base")
-result = model.transcribe("dot.mp3")
-print(result["text"])
-
-
-def getwordtimestamp():
-    model = whisper.load_model("base")
-    assert model.transcribe("dot.mp3").get("segments")
-    model = load_model("base")
-    # modified model should run just like the regular model but with additional hyperparameters and extra data in results
-    results = model.transcribe("dot.mp3")
-    stab_segments = results["segments"]
-    first_segment_word_timestamps = stab_segments[1]["whole_word_timestamps"]
-
-    word_timestamps = []
-    for i in range(0, len(stab_segments)):
-        word_timestamps.append(stab_segments[i]["whole_word_timestamps"])
-    # print(word_timestamps)
-
-    word_timestamps2 = []
-
-    for e in word_timestamps:
-        for i in e:
-            word_timestamps2.append(i)
-
-    # print(word_timestamps2)
-
-    formated_script = json.dumps(word_timestamps2, indent=2)
-    print(formated_script)
-
-    script_with_timestamps = {}
-    script_with_timestamps_list = []
-
-    # print(word_timestamps2[0]["word"])
-    # print(word_timestamps2[0]["timestamp"])
-
-    for e in word_timestamps2:
-        # print(e)
-        # script_with_timestamps.update([e["word"]] e["timestamp"])
-        # print(script_with_timestamps)
-        script_with_timestamps_list.append(script_with_timestamps)
-    # print(script_with_timestamps)
-    # print(script_with_timestamps)
-
-
-#     with open("script.txt", "w") as f:
-#         f.write(word_timestamps)
-
-
-getwordtimestamp()
+# model = whisper.load_model("base")
+# result = model.transcribe("photojoseph.mp3")
+# print(result["text"])
+#
+#
+# def getwordtimestamp():
+#     model = whisper.load_model("base")
+#     assert model.transcribe("dot.mp3").get("segments")
+#     model = load_model("base")
+#     # modified model should run just like the regular model but with additional hyperparameters and extra data in results
+#     results = model.transcribe("dot.mp3")
+#     stab_segments = results["segments"]
+#     first_segment_word_timestamps = stab_segments[1]["whole_word_timestamps"]
+#
+#     word_timestamps = []
+#     for i in range(0, len(stab_segments)):
+#         word_timestamps.append(stab_segments[i]["whole_word_timestamps"])
+#     # print(word_timestamps)
+#
+#     word_timestamps2 = []
+#
+#     for e in word_timestamps:
+#         for i in e:
+#             word_timestamps2.append(i)
+#
+#     # print(word_timestamps2)
+#
+#     formated_script = json.dumps(word_timestamps2, indent=2)
+#     print(formated_script)
+#
+#     script_with_timestamps = {}
+#     script_with_timestamps_list = []
+#
+#     # print(word_timestamps2[0]["word"])
+#     # print(word_timestamps2[0]["timestamp"])
+#
+#     for e in word_timestamps2:
+#         # print(e)
+#         # script_with_timestamps.update([e["word"]] e["timestamp"])
+#         # print(script_with_timestamps)
+#         script_with_timestamps_list.append(script_with_timestamps)
+#     # print(script_with_timestamps)
+#     # print(script_with_timestamps)
+#
+#
+# #     with open("script.txt", "w") as f:
+# #         f.write(word_timestamps)
+#
+#
+# getwordtimestamp()
 
 link = "https://www.youtube.com/watch?v=O_WbmIIy4vk"
 YoutubeVideo = YouTube(link)
 
 
-print("This is the tile")
-print(YoutubeVideo.title)
-
-print("This is the description")
-print(YoutubeVideo.description)
-
+# print("This is the tile")
+# print(YoutubeVideo.title)
+#
+# print("This is the description")
+# print(YoutubeVideo.description)
+#
 
 # print(YoutubeVideo.caption_tracks)
 # YoutubeVideo.download()
@@ -119,12 +119,12 @@ print(YoutubeVideo.description)
 # test_float_to_srt_time_format()
 
 
-print("these are the captions")
-for caption in YoutubeVideo.caption_tracks:
-    print(caption)
+# print("these are the captions")
+# for caption in YoutubeVideo.caption_tracks:
+#     print(caption)
 
-# stream = YouTube.streams.first()
-# stream.download("~/Documents/lang2views_project/videos")
+stream = YouTube.streams.first()
+stream.download("~/Documents/lang2views_project/videos")
 
 
 # class LocalizedVideo(YoutubeVideo):
