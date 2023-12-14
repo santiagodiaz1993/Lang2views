@@ -206,29 +206,41 @@ def main():
     #     )
     # )
 
-    url = "https://api.trello.com/1/cards/657b59e05a409420e8685702/customField/65120a445fd7a02ace295fc1/item"
+    # url = "https://api.trello.com/1/cards/657b59e05a409420e8685702/customField/65120a445fd7a02ace295fc1/item"
 
-    headers = {"Content-Type": "application/json"}
+    # headers = {"Content-Type": "application/json"}
 
-    query = {
-        "key": "507e54976cbef96c4b8e1b5b883f4639",
-        "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
-    }
+    # query = {
+    #     "key": "507e54976cbef96c4b8e1b5b883f4639",
+    #     "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+    # }
 
-    payload = json.dumps(
-        {
-            "value": {
-                "text": "Update custom field test"
-                # "checked": True,
-                # "date": "2018-03-13T16:00:00.000Z",
-                # "number": 2154,
-            }
-        }
+    # payload = json.dumps({"value": {"text": "Update custom field test"}})
+
+    # response = requests.request("PUT", url, data=payload, headers=headers, params=query)
+    # print(response.text)
+
+    import re
+
+    # prankmelater_parent_dir = "/home/santiago/Dropbox/Lang2views/Client Projects/Adley - Prank Me Later/Shorts/"
+    # month_dir = "4. January"
+    # os.mkdir(prankmelater_parent_dir + month_dir)
+    # print("directory opened")
+    video_link = "https://www.youtube.com/watch?v=8P1p7coSVhU&t=94s"
+    video_id = video_link.split("v=")
+    print(video_id)
+    video_id = re.search(
+        "/^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/",
+        video_link,
     )
+    print(video_id)
 
-    response = requests.request("PUT", url, data=payload, headers=headers, params=query)
+    from urllib.parse import urlparse
 
-    print(response.text)
+    url_data = urlparse("http://www.youtube.com/watch?v=z_AbfPXTKms&NR=1")
+    query = urlparse.parse_qs(url_data.query)
+    video = query["v"][0]
+    print(video)
 
 
 if __name__ == "__main__":
