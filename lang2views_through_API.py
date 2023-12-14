@@ -188,23 +188,47 @@ def main():
     #     "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
     # }
 
+    # query = {
+    #     "key": "507e54976cbef96c4b8e1b5b883f4639",
+    #     "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+    #     "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
+    #     "idCardSource": "65121053765103ab051fb04a",
+    #     "idList": "657b55f47eb6bf3aede6aa9d",
+    #     "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
+    #     "name": "Test Template",
+    # }
+
+    # response = requests.request("POST", url, headers=headers, params=query)
+
+    # print(
+    #     json.dumps(
+    #         json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")
+    #     )
+    # )
+
+    url = "https://api.trello.com/1/cards/657b59e05a409420e8685702/customField/65120a445fd7a02ace295fc1/item"
+
+    headers = {"Content-Type": "application/json"}
+
     query = {
         "key": "507e54976cbef96c4b8e1b5b883f4639",
         "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
-        "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
-        "idCardSource": "65121053765103ab051fb04a",
-        "idList": "657b55f47eb6bf3aede6aa9d",
-        "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
-        "name": "Test Template",
     }
 
-    response = requests.request("POST", url, headers=headers, params=query)
-
-    print(
-        json.dumps(
-            json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")
-        )
+    payload = json.dumps(
+        {
+            "value": {
+                "text": "Update custom field test"
+                # "checked": True,
+                # "date": "2018-03-13T16:00:00.000Z",
+                # "number": 2154,
+            }
+        }
     )
+
+    response = requests.request("PUT", url, data=payload, headers=headers, params=query)
+
+    print(response.text)
 
 
 if __name__ == "__main__":
