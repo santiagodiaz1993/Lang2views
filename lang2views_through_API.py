@@ -9,6 +9,11 @@
 
 import os
 import io
+import re
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
+import requests
+import json
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -24,41 +29,49 @@ scopes = [
 
 
 def main():
-    # # Disable OAuthlib's HTTPS verification when running locally.
-    # # *DO NOT* leave this option enabled in production.
-    # os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-    # api_service_name = "youtube"
-    # api_version = "v3"
-    # client_secrets_file = "YOUR_CLIENT_SECRET_FILE.json"
+    url_data = urlparse("http://www.youtube.com/watch?v=z_AbfPXTKms&NR=1")
+    query = parse_qs(url_data.query)
+    print(query)
+    video_id = query["v"]
+    print(video_id)
 
-    # # Get credentials and create an API client
-    # flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-    #     client_secrets_file, scopes
-    # )
-    # credentials = flow.run_local_server(port=0)
+    # Disable OAuthlib's HTTPS verification when running locally.
 
-    # youtube = googleapiclient.discovery.build(
-    #     api_service_name, api_version, credentials=credentials
-    # )
+    # *DO NOT* leave this option enabled in production.
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-    # request = youtube.videos().list(part="snippet", id="MUDNnIbwSNo")
-    # response = request.execute()
+    api_service_name = "youtube"
+    api_version = "v3"
+    client_secrets_file = "YOUR_CLIENT_SECRET_FILE.json"
 
-    # print("This is the whole response")
-    # print(response["items"][0]["snippet"]["tags"])
+    # Get credentials and create an API client
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+        client_secrets_file, scopes
+    )
+    credentials = flow.run_local_server(port=0)
 
-    # print("this is the title")
-    # print(response["items"][0]["snippet"]["title"])
+    youtube = googleapiclient.discovery.build(
+        api_service_name, api_version, credentials=credentials
+    )
 
-    # print("this is the description")
-    # print(response["items"][0]["snippet"]["description"])
+    request = youtube.videos().list(part="snippet", id="MUDNnIbwSNo")
+    response = request.execute()
 
-    # print("these is the tags")
-    # print(response["items"][0]["snippet"]["tags"])
+    print("This is the whole response")
+    print(response["items"][0]["snippet"]["tags"])
 
-    # # print("the captions are being downloaded")
-    # # request = youtube.captions().download(id="yNhJTXABEg0", tfmt="srt")
+    print("this is the title")
+    print(response["items"][0]["snippet"]["title"])
+
+    print("this is the description")
+    print(response["items"][0]["snippet"]["description"])
+
+    print("these is the tags")
+    print(response["items"][0]["snippet"]["tags"])
+
+    # print("the captions are being downloaded")
+    # request = youtube.captions().download(id="yNhJTXABEg0", tfmt="srt")
 
     # # fh = io.FileIO("YOUR_FILE", "wb")
 
@@ -154,8 +167,6 @@ def main():
 
     # This code sample uses the 'requests' library:
     # http://docs.python-requests.org
-    import requests
-    import json
 
     # url = "https://api.trello.com/1/lists"
 
@@ -220,27 +231,16 @@ def main():
     # response = requests.request("PUT", url, data=payload, headers=headers, params=query)
     # print(response.text)
 
-    import re
-
     # prankmelater_parent_dir = "/home/santiago/Dropbox/Lang2views/Client Projects/Adley - Prank Me Later/Shorts/"
     # month_dir = "4. January"
     # os.mkdir(prankmelater_parent_dir + month_dir)
     # print("directory opened")
-    video_link = "https://www.youtube.com/watch?v=8P1p7coSVhU&t=94s"
-    video_id = video_link.split("v=")
-    print(video_id)
-    video_id = re.search(
-        "/^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/",
-        video_link,
-    )
-    print(video_id)
-
-    from urllib.parse import urlparse
 
     url_data = urlparse("http://www.youtube.com/watch?v=z_AbfPXTKms&NR=1")
-    query = urlparse.parse_qs(url_data.query)
-    video = query["v"][0]
-    print(video)
+    query = parse_qs(url_data.query)
+    print(query)
+    video_id = query["v"]
+    print(video_id)
 
 
 if __name__ == "__main__":
