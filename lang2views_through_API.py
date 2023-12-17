@@ -22,6 +22,16 @@ from pytube import YouTube
 
 from googleapiclient.http import MediaIoBaseDownload
 
+import whisper
+from stable_whisper import modify_model
+from stable_whisper import load_model
+import json
+import whisper
+from youtube_transcript_api import YouTubeTranscriptApi
+from pytube import YouTube, Caption, captions, CaptionQuery
+import pytube
+from pytube import extract
+
 scopes = [
     "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/youtube.force-ssl",
@@ -30,13 +40,10 @@ scopes = [
 
 def main():
 
-    url_data = urlparse("http://www.youtube.com/watch?v=z_AbfPXTKms&NR=1")
-    query = parse_qs(url_data.query)
-    print(query)
-    video_id = query["v"]
-    print(video_id)
-
-    # Disable OAuthlib's HTTPS verification when running locally.
+    board = "thefirearmguy"
+    video_type = "short"
+    video_url = "https://youtube.com/shorts/giid2QYVKo0"
+    video_id = extract.video_id(video_url)
 
     # *DO NOT* leave this option enabled in production.
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -50,123 +57,73 @@ def main():
         client_secrets_file, scopes
     )
     credentials = flow.run_local_server(port=0)
-
     youtube = googleapiclient.discovery.build(
         api_service_name, api_version, credentials=credentials
     )
 
-    request = youtube.videos().list(part="snippet", id="MUDNnIbwSNo")
+    request = youtube.videos().list(part="snippet", id=video_id)
     response = request.execute()
 
-    print("This is the whole response")
-    print(response["items"][0]["snippet"]["tags"])
+    print("board is " + board)
+    print("video type is " + video_type)
+    print("video id is " + video_id)
 
-    print("this is the title")
-    print(response["items"][0]["snippet"]["title"])
+    print("the title is" + response["items"][0]["snippet"]["title"])
+    video_title = response["items"][0]["snippet"]["title"]
 
-    print("this is the description")
-    print(response["items"][0]["snippet"]["description"])
+    print("The description " + response["items"][0]["snippet"]["description"])
+    video_description = response["items"][0]["snippet"]["description"]
 
-    print("these is the tags")
-    print(response["items"][0]["snippet"]["tags"])
+    print("the tags are " + str(response["items"][0]["snippet"]["tags"]))
+    video_tags = response["items"][0]["snippet"]["tags"]
 
-    # print("the captions are being downloaded")
-    # request = youtube.captions().download(id="yNhJTXABEg0", tfmt="srt")
+    next_video_number = str(
+        sorted(
+            os.listdir(
+                "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+            )
+        )[-1][0:2]
+    )
 
-    # # fh = io.FileIO("YOUR_FILE", "wb")
+    print(next_video_number)
 
-    # # download = MediaIoBaseDownload(fh, request)
-    # # complete = False
-    # # while not complete:
-    # #     status, complete = download.next_chunk()
+    print("This is the list of files")
+    print(directory_list)
 
-    # from pytube import YouTube
+    os.mkdir(
+        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+        + next_video_number
+        + "."
+        + video_title
+    )
 
-    # def download_youtube_video(url, output_path="."):
-    #     try:
-    #         # Create a YouTube object
-    #         yt = YouTube(url)
+    def download_youtube_video(url, output_path="."):
+        try:
+            # Create a YouTube object
+            yt = YouTube(url)
 
-    #         # Get the highest resolution stream
-    #         video_stream = yt.streams.get_highest_resolution()
+            # Get the highest resolution stream
+            video_stream = yt.streams.get_highest_resolution()
 
-    #         # Download the video
-    #         print(f"Downloading: {yt.title}")
-    #         video_stream.download(output_path)
-    #         print("Download complete!")
+            # Download the video
+            print(f"Downloading: {yt.title}")
+            video_stream.download(output_path)
+            print("Download complete!")
 
-    #     except Exception as e:
-    #         print(f"Error: {str(e)}")
+        except Exception as e:
+            print(f"Error: {str(e)}")
 
-    # # Example usage
-    # url = "https://www.youtube.com/shorts/FBk36cXzkOU"
-    # output_path = "/home/santiago/Documents/lang2views_project"
-    # download_youtube_video(url, output_path)
+    # Example usage
+    output_path = (
+        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts"
+        + video_title
+    )
+    download_youtube_video(video_url, output_path)
 
-    #     import whisper
-    #     from stable_whisper import modify_model
-    #     from stable_whisper import load_model
-    #     import json
-    #     import whisper
-    #     from youtube_transcript_api import YouTubeTranscriptApi
-    #     from pytube import YouTube, Caption, captions, CaptionQuery
-    #     import pytube
-    #
-    #     model = whisper.load_model("base")
-    #     result = model.transcribe("angelito.mp4")
-    #     translate = model.transcribe("angelito.mp4", task="translate")
-    #     print(result["text"])
-    #     text = result["text"]
-    #
-
-    # import os.path
-
-    # from google.auth.transport.requests import Request
-    # from google.oauth2.credentials import Credentials
-    # from google_auth_oauthlib.flow import InstalledAppFlow
-    # from googleapiclient.discovery import build
-    # from googleapiclient.errors import HttpError
-
-    # # If modifying these scopes, delete the file token.json.
-    # SCOPES = ["https://www.googleapis.com/auth/documents.readonly"]
-
-    # # The ID of a sample document.
-    # DOCUMENT_ID = "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
-
-    # """Shows basic usage of the Docs API.
-    #   Prints the title of a sample document.
-    #   """
-    # creds = None
-    # # The file token.json stores the user's access and refresh tokens, and is
-    # # created automatically when the authorization flow completes for the first
-    # # time.
-    # if os.path.exists("token.json"):
-    #     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # # If there are no (valid) credentials available, let the user log in.
-    # if not creds or not creds.valid:
-    #     if creds and creds.expired and creds.refresh_token:
-    #         creds.refresh(Request())
-    #     else:
-    #         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    #         creds = flow.run_local_server(port=0)
-    #     # Save the credentials for the next run
-    #     with open("token.json", "w") as token:
-    #         token.write(creds.to_json())
-
-    # try:
-    #     service = build("docs", "v1", credentials=creds)
-
-    #     # Retrieve the documents contents from the Docs service.
-    #     document = service.documents().get(documentId=DOCUMENT_ID).execute()
-
-    #     print(f"The title of the document is: {document.get('title')}")
-    # except HttpError as err:
-    #     print(err)
-
-    # import requests
-
-    # This code sample uses the 'requests' library:
-    # http://docs.python-requests.org
+    model = whisper.load_model("base")
+    result = model.transcribe("/home/santiago/Documents/test.mp4")
+    print(result["text"])
+    text = result["text"]
 
     # url = "https://api.trello.com/1/lists"
 
@@ -181,9 +138,9 @@ def main():
 
     # print(response.text)
 
-    url = "https://api.trello.com/1/cards"
+    # url = "https://api.trello.com/1/cards"
 
-    headers = {"Accept": "application/json"}
+    # headers = {"Accept": "application/json"}
 
     # query = {
     #     "idList": "657b55f47eb6bf3aede6aa9d",
@@ -230,6 +187,64 @@ def main():
 
     # response = requests.request("PUT", url, data=payload, headers=headers, params=query)
     # print(response.text)
+
+    # print("the captions are being downloaded")
+    # request = youtube.captions().download(id="yNhJTXABEg0", tfmt="srt")
+
+    # # fh = io.FileIO("YOUR_FILE", "wb")
+
+    # # download = MediaIoBaseDownload(fh, request)
+    # # complete = False
+    # # while not complete:
+    # #     status, complete = download.next_chunk()
+
+    # from pytube import YouTube
+
+    #
+
+    # import os.path
+
+    # from google.auth.transport.requests import Request
+    # from google.oauth2.credentials import Credentials
+    # from google_auth_oauthlib.flow import InstalledAppFlow
+    # from googleapiclient.discovery import build
+    # from googleapiclient.errors import HttpError
+
+    # # If modifying these scopes, delete the file token.json.
+    # SCOPES = ["https://www.googleapis.com/auth/documents.readonly"]
+
+    # # The ID of a sample document.
+    # DOCUMENT_ID = "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
+
+    # """Shows basic usage of the Docs API.
+    #   Prints the title of a sample document.
+    #   """
+    # creds = None
+    # # The file token.json stores the user's access and refresh tokens, and is
+    # # created automatically when the authorization flow completes for the first
+    # # time.
+    # if os.path.exists("token.json"):
+    #     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    # # If there are no (valid) credentials available, let the user log in.
+    # if not creds or not creds.valid:
+    #     if creds and creds.expired and creds.refresh_token:
+    #         creds.refresh(Request())
+    #     else:
+    #         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+    #         creds = flow.run_local_server(port=0)
+    #     # Save the credentials for the next run
+    #     with open("token.json", "w") as token:
+    #         token.write(creds.to_json())
+
+    # try:
+    #     service = build("docs", "v1", credentials=creds)
+
+    #     # Retrieve the documents contents from the Docs service.
+    #     document = service.documents().get(documentId=DOCUMENT_ID).execute()
+
+    #     print(f"The title of the document is: {document.get('title')}")
+    # except HttpError as err:
+    #     print(err)
 
     # prankmelater_parent_dir = "/home/santiago/Dropbox/Lang2views/Client Projects/Adley - Prank Me Later/Shorts/"
     # month_dir = "4. January"
