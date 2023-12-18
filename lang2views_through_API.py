@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import requests
 import json
+import ffmpeg
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -32,10 +33,35 @@ from pytube import YouTube, Caption, captions, CaptionQuery
 import pytube
 from pytube import extract
 
+
+import os.path
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+
+keys = {trello_api_key: "",
+        youtube_api_key: ""}
+
 scopes = [
     "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/youtube.force-ssl",
 ]
+
+thefirearmguy_data = {
+    "trello_board_id": ""
+    "trello_longformat_list_ID": ""
+    "trello_shorts_list_ID": ""
+    "trello_script_field_ID": ""
+    "shorts_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
+    "long_format_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+}
+
+
+
 
 
 def main():
@@ -45,21 +71,8 @@ def main():
     video_url = "https://youtube.com/shorts/giid2QYVKo0"
     video_id = extract.video_id(video_url)
 
-    # *DO NOT* leave this option enabled in production.
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
-    api_service_name = "youtube"
-    api_version = "v3"
-    client_secrets_file = "YOUR_CLIENT_SECRET_FILE.json"
-
-    # Get credentials and create an API client
-    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        client_secrets_file, scopes
-    )
-    credentials = flow.run_local_server(port=0)
-    youtube = googleapiclient.discovery.build(
-        api_service_name, api_version, credentials=credentials
-    )
+    api_key = "AIzaSyDf5sAydLvEi-skWyH5AeiX4g5GP6kHilo"
+    youtube = build("youtube", "v3", developerKey=api_key)
 
     request = youtube.videos().list(part="snippet", id=video_id)
     response = request.execute()
@@ -85,17 +98,15 @@ def main():
         )[-1][0:2]
     )
 
-    print(next_video_number)
-
-    print("This is the list of files")
-    print(directory_list)
-
-    os.mkdir(
-        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-        + next_video_number
-        + "."
-        + video_title
-    )
+    try:
+        os.mkdir(
+            "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+            + next_video_number
+            + ". "
+            + video_title
+        )
+    except:
+        print("video file already exists")
 
     def download_youtube_video(url, output_path="."):
         try:
@@ -115,17 +126,115 @@ def main():
 
     # Example usage
     output_path = (
-        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts"
+        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+        + next_video_number
+        + ". "
         + video_title
+        + "/"
     )
+
     download_youtube_video(video_url, output_path)
 
+    # Load the video file
+    input_file = ffmpeg.input(
+        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+        + next_video_number
+        + ". "
+        + video_title
+        + "/"
+        + video_title
+        + ".mp4"
+    )
+
+    # Extract the audio and save it as an MP3 file
+    input_file.output(
+        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+        + next_video_number
+        + ". "
+        + video_title
+        + "/"
+        + video_title
+        + ".mp3",
+        acodec="mp3",
+    ).run()
+
     model = whisper.load_model("base")
-    result = model.transcribe("/home/santiago/Documents/test.mp4")
+    result = model.transcribe(
+        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
+        + next_video_number
+        + ". "
+        + video_title
+        + "/"
+        + video_title
+        + ".mp3"
+    )
     print(result["text"])
     text = result["text"]
 
-    # url = "https://api.trello.com/1/lists"
+    # # If modifying these scopes, delete the file token.json.
+    SCOPES = [
+        "https://www.googleapis.com/auth/documents",
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/drive.file",
+    ]
+
+    # # The ID of a sample document.
+    DOCUMENT_ID = "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
+
+    """Shows basic usage of the Docs API.
+      Prints the title of a sample document.
+      """
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+
+    try:
+        service = build("docs", "v1", credentials=creds)
+
+        # Retrieve the documents contents from the Docs service.
+        document = service.documents().get(documentId=DOCUMENT_ID).execute()
+        print(f"The title of the document is: {document.get('title')}")
+
+    except HttpError as err:
+        print(err)
+
+    body = {"title": video_title}
+    doc = service.documents().create(body=body).execute()
+    title = doc.get("title")
+    _id = doc.get("documentId")
+    print(f"Created document with title: {title}, id: {_id}")
+
+    # Text insertion
+    requests = [
+        {
+            "insertText": {
+                "location": {
+                    "index": 1,
+                },
+                "text": text,
+            }
+        }
+    ]
+    result = (
+        service.documents()
+        .batchUpdate(documentId=_id, body={"requests": requests})
+        .execute()
+    )
+
+    url = "https://api.trello.com/1/lists"
 
     # query = {
     #     "name": "{Long Format Video Localization}",
@@ -197,54 +306,6 @@ def main():
     # # complete = False
     # # while not complete:
     # #     status, complete = download.next_chunk()
-
-    # from pytube import YouTube
-
-    #
-
-    # import os.path
-
-    # from google.auth.transport.requests import Request
-    # from google.oauth2.credentials import Credentials
-    # from google_auth_oauthlib.flow import InstalledAppFlow
-    # from googleapiclient.discovery import build
-    # from googleapiclient.errors import HttpError
-
-    # # If modifying these scopes, delete the file token.json.
-    # SCOPES = ["https://www.googleapis.com/auth/documents.readonly"]
-
-    # # The ID of a sample document.
-    # DOCUMENT_ID = "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
-
-    # """Shows basic usage of the Docs API.
-    #   Prints the title of a sample document.
-    #   """
-    # creds = None
-    # # The file token.json stores the user's access and refresh tokens, and is
-    # # created automatically when the authorization flow completes for the first
-    # # time.
-    # if os.path.exists("token.json"):
-    #     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # # If there are no (valid) credentials available, let the user log in.
-    # if not creds or not creds.valid:
-    #     if creds and creds.expired and creds.refresh_token:
-    #         creds.refresh(Request())
-    #     else:
-    #         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    #         creds = flow.run_local_server(port=0)
-    #     # Save the credentials for the next run
-    #     with open("token.json", "w") as token:
-    #         token.write(creds.to_json())
-
-    # try:
-    #     service = build("docs", "v1", credentials=creds)
-
-    #     # Retrieve the documents contents from the Docs service.
-    #     document = service.documents().get(documentId=DOCUMENT_ID).execute()
-
-    #     print(f"The title of the document is: {document.get('title')}")
-    # except HttpError as err:
-    #     print(err)
 
     # prankmelater_parent_dir = "/home/santiago/Dropbox/Lang2views/Client Projects/Adley - Prank Me Later/Shorts/"
     # month_dir = "4. January"
