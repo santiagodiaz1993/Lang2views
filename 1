@@ -228,21 +228,16 @@ def main():
         .execute()
     )
 
-    # This code sample uses the 'requests' library:
-    # http://docs.python-requests.org
-    import requests
-
     url = "https://api.trello.com/1/lists"
 
     query = {
-        "name": "{test}",
+        "name": "{Long Format Video Localization}",
         "idBoard": thefirearmguy_data["trello_board_id"],
-        "key": keys["trello_api_key"],
-        "token": keys["trello_token"],
+        "key": "507e54976cbef96c4b8e1b5b883f4639",
+        "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
     }
 
     response = requests.request("POST", url, params=query)
-
     print(response.text)
 
     # url = "https://api.trello.com/1/cards"
