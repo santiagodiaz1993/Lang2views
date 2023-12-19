@@ -65,12 +65,35 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive.file",
 ]
 
-thefirearmguy_data = {
-    "trello_board_id": "64c709c04259bef49a00c5de",
-    "trello_longformat_list_ID": "64baa956447059d528377b87",
-    "trello_longformat_script_field_ID": "64ca69028b331b036679c2ab",
-    "trello_shorts_list_ID": "64c709c04259bef49a00c5df",
-    "trello_short_script_field_ID": "6537d7173e68b703e6327632",
+creator = {
+    "thefirearmguy": {
+        "trello_board_id": "64c709c04259bef49a00c5de",
+        "trello_longformat_list_ID": "64baa956447059d528377b87",
+        "trello_longformat_script_field_ID": "64ca69028b331b036679c2ab",
+        "trello_shorts_list_ID": "64c709c04259bef49a00c5df",
+        "trello_short_script_field_ID": "6537d7173e68b703e6327632",
+        "trello_short_tamplate_id": "64ca6c0f94fc3cee563f130b",
+        "trello_longformat_template_id": "",
+    },
+    "prank_me_later": {
+        "trello_board_id": "64c709c04259bef49a00c5de",
+        "trello_longformat_list_ID": "64baa956447059d528377b87",
+        "trello_longformat_script_field_ID": "64ca69028b331b036679c2ab",
+        "trello_shorts_list_ID": "64c709c04259bef49a00c5df",
+        "trello_short_script_field_ID": "6537d7173e68b703e6327632",
+    },
+}
+
+yt_video = {
+    "title": "",
+    "video_number": "",
+    "id": "",
+    "description": "",
+    "tags": "",
+    "script": "",
+    "storage_location": "",
+    "video_url": "",
+    "script_url": "",
     "shorts_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
     "long_format_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Long Format/",
 }
@@ -78,130 +101,95 @@ thefirearmguy_data = {
 
 def main():
 
-    board = "thefirearmguy"
-    video_type = "short"
-    video_url = "https://youtube.com/shorts/giid2QYVKo0"
-    video_id = extract.video_id(video_url)
+    yt_video["video_url"] = "https://youtube.com/shorts/giid2QYVKo0"
+    yt_video["id"] = extract.video_id(yt_video["video_url"])
 
-    api_key = "AIzaSyDf5sAydLvEi-skWyH5AeiX4g5GP6kHilo"
-    youtube = build("youtube", "v3", developerKey=api_key)
+    youtube = build("youtube", "v3", developerKey=keys["youtube_api_key"])
+    video_request = youtube.videos().list(part="snippet", id=yt_video["id"])
+    video_response = video_request.execute()
 
-    request = youtube.videos().list(part="snippet", id=video_id)
-    response = request.execute()
+    yt_video["title"] = video_response["items"][0]["snippet"]["title"]
+    yt_video["description"] = video_response["items"][0]["snippet"]["description"]
+    yt_video["tags"] = video_response["items"][0]["snippet"]["tags"]
 
-    print("board is " + board)
-    print("video type is " + video_type)
-    print("video id is " + video_id)
+    shorts_folders = os.listdir(yt_video["shorts_path"])
+    shorts_folders = sorted(shorts_folders)
+    video_number = str(shorts_folders[-1][0:2])
+    yt_video["video_number"] = video_number
 
-    print("the title is" + response["items"][0]["snippet"]["title"])
-    video_title = response["items"][0]["snippet"]["title"]
+    print(yt_video)
 
-    print("The description " + response["items"][0]["snippet"]["description"])
-    video_description = response["items"][0]["snippet"]["description"]
-
-    print("the tags are " + str(response["items"][0]["snippet"]["tags"]))
-    video_tags = response["items"][0]["snippet"]["tags"]
-
-    next_video_number = str(
-        sorted(
-            os.listdir(
-                "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-            )
-        )[-1][0:2]
-    )
-
-    try:
-        os.mkdir(
-            "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-            + next_video_number
+    if (
+        os.listdir(
+            yt_video["shorts_path"]
+            + yt_video["video_number"]
             + ". "
-            + video_title
+            + yt_video["title"]
         )
-    except:
-        print("video file already exists")
-
-    def download_youtube_video(url, output_path="."):
-        try:
-            # Create a YouTube object
-            yt = YouTube(url)
-
-            # Get the highest resolution stream
-            video_stream = yt.streams.get_highest_resolution()
-
-            # Download the video
-            print(f"Downloading: {yt.title}")
-            video_stream.download(output_path)
-            print("Download complete!")
-
-        except Exception as e:
-            print(f"Error: {str(e)}")
+        == None
+    ):
+        os.mkdir(
+            yt_video["shorts_path"]
+            + yt_video["video_number"]
+            + ". "
+            + yt_video["title"]
+        )
 
     # Example usage
     output_path = (
-        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-        + next_video_number
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
         + ". "
-        + video_title
+        + yt_video["title"]
         + "/"
     )
 
-    download_youtube_video(video_url, output_path)
+    yt = YouTube(yt_video["video_url"])
+    video_stream = yt.streams.get_highest_resolution()
+    video_stream.download(output_path)
 
     # Load the video file
     input_file = ffmpeg.input(
-        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-        + next_video_number
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
         + ". "
-        + video_title
+        + yt_video["title"]
         + "/"
-        + video_title
+        + yt_video["title"]
         + ".mp4"
     )
 
     # Extract the audio and save it as an MP3 file
     input_file.output(
-        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-        + next_video_number
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
         + ". "
-        + video_title
+        + yt_video["title"]
         + "/"
-        + video_title
+        + yt_video["title"]
         + ".mp3",
         acodec="mp3",
     ).run()
 
     model = whisper.load_model("base")
     result = model.transcribe(
-        "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/"
-        + next_video_number
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
         + ". "
-        + video_title
+        + yt_video["title"]
         + "/"
-        + video_title
+        + yt_video["title"]
         + ".mp3"
     )
-    print(result["text"])
-    text = result["text"]
+    yt_video["script"] = result["text"]
 
-    """Shows basic usage of the Docs API.
-      Prints the title of a sample document.
-      """
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
+    print(yt_video)
+
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+        creds = flow.run_local_server(port=0)
 
     service = build("docs", "v1", credentials=creds)
 
@@ -218,7 +206,7 @@ def main():
                 "location": {
                     "index": 1,
                 },
-                "text": text,
+                "text": yt_video["script"],
             }
         }
     ]
@@ -227,9 +215,6 @@ def main():
         .batchUpdate(documentId=_id, body={"requests": gdoc_text})
         .execute()
     )
-
-    # This code sample uses the 'requests' library:
-    # http://docs.python-requests.org
 
     def create_new_trello_list(name, board):
         url = "https://api.trello.com/1/lists"
@@ -245,31 +230,31 @@ def main():
 
         print(response.text)
 
-    def clone_trello_card(name, list_id, card_id):
-        url = "https://api.trello.com/1/cards"
+    # def clone_trello_card(name, list_id, card_id):
+    url = "https://api.trello.com/1/cards"
 
-        headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json"}
 
-        query = {
-            "key": "507e54976cbef96c4b8e1b5b883f4639",
-            "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
-            "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
-            "idCardSource": "64ca6c0f94fc3cee563f130b",
-            "idList": "64baa956447059d528377b87",
-            "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
-            "name": video_title,
-        }
+    query = {
+        "key": keys["trello_api_key"],
+        "token": keys["trello_token"],
+        "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
+        "idCardSource": "64ca6c0f94fc3cee563f130b",
+        "idList": "64baa956447059d528377b87",
+        "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
+        "name": yt_video["title"],
+    }
 
-        response = requests.request("POST", url, headers=headers, params=query)
+    response = requests.request("POST", url, headers=headers, params=query)
 
-        print(
-            json.dumps(
-                json.loads(response.text),
-                sort_keys=True,
-                indent=4,
-                separators=(",", ": "),
-            )
+    print(
+        json.dumps(
+            json.loads(response.text),
+            sort_keys=True,
+            indent=4,
+            separators=(",", ": "),
         )
+    )
 
     def update_customefield_from_card(value, custom_field_id, card_id):
         url = "https://api.trello.com/1/cards/6580684b86c5ca371989af23/customField/64ca69028b331b036679c2ab/item"
