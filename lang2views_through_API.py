@@ -68,16 +68,17 @@ SCOPES = [
 creator = {
     "thefirearmguy": {
         "trello_board_id": "64c709c04259bef49a00c5de",
-        "trello_longformat_list_ID": "64baa956447059d528377b87",
+        "trello_dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
+        "trello_longformat_list_id": "64baa956447059d528377b87",
         "trello_longformat_script_field_ID": "64ca69028b331b036679c2ab",
-        "trello_shorts_list_ID": "64c709c04259bef49a00c5df",
-        "trello_short_script_field_ID": "6537d7173e68b703e6327632",
+        "trello_shorts_list_id": "64c709c04259bef49a00c5df",
+        "trello_short_script_field_id": "6537d7173e68b703e6327632",
         "trello_short_tamplate_id": "64ca6c0f94fc3cee563f130b",
         "trello_longformat_template_id": "",
     },
     "prank_me_later": {
         "trello_board_id": "64c709c04259bef49a00c5de",
-        "trello_longformat_list_ID": "64baa956447059d528377b87",
+        "trello_longformat_list_id": "64baa956447059d528377b87",
         "trello_longformat_script_field_ID": "64ca69028b331b036679c2ab",
         "trello_shorts_list_ID": "64c709c04259bef49a00c5df",
         "trello_short_script_field_ID": "6537d7173e68b703e6327632",
@@ -96,6 +97,7 @@ yt_video = {
     "script_url": "",
     "shorts_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
     "long_format_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Long Format/",
+    "new_trello_card_id": "",
 }
 
 
@@ -181,6 +183,7 @@ def main():
         + yt_video["title"]
         + ".mp3"
     )
+
     yt_video["script"] = result["text"]
 
     print(yt_video)
@@ -193,11 +196,13 @@ def main():
 
     service = build("docs", "v1", credentials=creds)
 
-    body = {"title": video_title + " - Script"}
+    body = {"title": yt_video["video_number"] + yt_video["title"] + " - Script"}
     doc = service.documents().create(body=body).execute()
     title = doc.get("title")
-    _id = doc.get("documentId")
-    print(f"Created document with title: {title}, id: {_id}")
+    video_script_doc_id = doc.get("documentId")
+    yt_video["script"] = "https://docs.google.com/document/d/video_script_doc_id/edit"
+
+    print(yt_video)
 
     # Text insertion
     gdoc_text = [
@@ -212,7 +217,7 @@ def main():
     ]
     result = (
         service.documents()
-        .batchUpdate(documentId=_id, body={"requests": gdoc_text})
+        .batchUpdate(documentId=video_script_doc_id, body={"requests": gdoc_text})
         .execute()
     )
 
@@ -239,39 +244,29 @@ def main():
         "key": keys["trello_api_key"],
         "token": keys["trello_token"],
         "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
-        "idCardSource": "64ca6c0f94fc3cee563f130b",
-        "idList": "64baa956447059d528377b87",
+        "idCardSource": creator["thefirearmguy"]["trello_short_tamplate_id"],
+        "idList": creator["thefirearmguy"]["trello_shorts_list_id"],
         "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
         "name": yt_video["title"],
     }
 
     response = requests.request("POST", url, headers=headers, params=query)
+    print("This is the text")
+    print(json.loads(response.text)["id"])
 
-    print(
-        json.dumps(
-            json.loads(response.text),
-            sort_keys=True,
-            indent=4,
-            separators=(",", ": "),
-        )
-    )
+    url = "https://api.trello.com/1/cards/6580684b86c5ca371989af23/customField/64ca69028b331b036679c2ab/item"
 
-    def update_customefield_from_card(value, custom_field_id, card_id):
-        url = "https://api.trello.com/1/cards/6580684b86c5ca371989af23/customField/64ca69028b331b036679c2ab/item"
+    headers = {"Content-Type": "application/json"}
 
-        headers = {"Content-Type": "application/json"}
+    query = {
+        "key": "507e54976cbef96c4b8e1b5b883f4639",
+        "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+    }
 
-        query = {
-            "key": "507e54976cbef96c4b8e1b5b883f4639",
-            "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
-        }
+    payload = json.dumps({"value": {"text": "Update custom field test"}})
 
-        payload = json.dumps({"value": {"text": "Update custom field test"}})
-
-        response = requests.request(
-            "PUT", url, data=payload, headers=headers, params=query
-        )
-        print(response.text)
+    response = requests.request("PUT", url, data=payload, headers=headers, params=query)
+    print(response.text)
 
 
 if __name__ == "__main__":
