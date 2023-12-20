@@ -127,128 +127,123 @@ def main():
         yt_video["tags"] = video_response["items"][0]["snippet"]["tags"]
 
     def set_video_number
-        shorts_folders = os.listdir(yt_video["shorts_path"])
-        shorts_folders = sorted(shorts_folders)
-        video_number = str(shorts_folders[-1][0:2])
-        yt_video["video_number"] = video_number
+    shorts_folders = os.listdir(yt_video["shorts_path"])
+    shorts_folders = sorted(shorts_folders)
+    video_number = str(shorts_folders[-1][0:2])
+    yt_video["video_number"] = video_number
 
-    def create_dropbox_video_folder():
-        if (
-            os.listdir(
-                yt_video["shorts_path"]
-                + yt_video["video_number"]
-                + ". "
-                + yt_video["title"]
-            )
-            == None
-        ):
-            os.mkdir(
-                yt_video["shorts_path"]
-                + yt_video["video_number"]
-                + ". "
-                + yt_video["title"]
-            )
-
-    def download_video():
-        output_path = (
+    if (
+        os.listdir(
             yt_video["shorts_path"]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
-            + "/"
+        )
+        == None
+    ):
+        os.mkdir(
+            yt_video["shorts_path"]
+            + yt_video["video_number"]
+            + ". "
+            + yt_video["title"]
         )
 
-        yt = YouTube(yt_video["video_url"])
-        video_stream = yt.streams.get_highest_resolution()
-        video_stream.download(output_path)
+    output_path = (
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
+        + ". "
+        + yt_video["title"]
+        + "/"
+    )
 
-    def convert_video_to_audio():
-        # Load the video file
-        input_file = ffmpeg.input(
-            yt_video["shorts_path"]
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
-            + "/"
-            + yt_video["title"]
-            + ".mp4"
-        )
+    yt = YouTube(yt_video["video_url"])
+    video_stream = yt.streams.get_highest_resolution()
+    video_stream.download(output_path)
 
-        # Extract the audio and save it as an MP3 file
-        input_file.output(
-            yt_video["shorts_path"]
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
-            + "/"
-            + yt_video["title"]
-            + ".mp3",
-            acodec="mp3",
-        ).run()
+    # Load the video file
+    input_file = ffmpeg.input(
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
+        + ". "
+        + yt_video["title"]
+        + "/"
+        + yt_video["title"]
+        + ".mp4"
+    )
 
-    def transcribe_video():
-        model = whisper.load_model("base")
-        result = model.transcribe(
-            yt_video["shorts_path"]
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
-            + "/"
-            + yt_video["title"]
-            + ".mp3"
-        )
-        yt_video["script"] = result["text"]
+    # Extract the audio and save it as an MP3 file
+    input_file.output(
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
+        + ". "
+        + yt_video["title"]
+        + "/"
+        + yt_video["title"]
+        + ".mp3",
+        acodec="mp3",
+    ).run()
 
-    def count_video_length()
-        audio = MP3(
-            yt_video["shorts_path"]
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
-            + "/"
-            + yt_video["title"]
-            + ".mp3"
-        )
+    model = whisper.load_model("base")
+    result = model.transcribe(
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
+        + ". "
+        + yt_video["title"]
+        + "/"
+        + yt_video["title"]
+        + ".mp3"
+    )
 
-        yt_video["length"] = audio.info.length)
+    audio = MP3(
+        yt_video["shorts_path"]
+        + yt_video["video_number"]
+        + ". "
+        + yt_video["title"]
+        + "/"
+        + yt_video["title"]
+        + ".mp3"
+    )
 
+    yt_video["length"] = audio.info.length)
 
-    def gdoc_authenticate():
-        if os.path.exists("token.json"):
-            creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
+    yt_video["script"] = result["text"]
 
-        service = build("docs", "v1", credentials=creds)
+    print(yt_video)
 
-    def gdoc_set_doc_title():
-        body = {"title": yt_video["video_number"] + yt_video["title"] + " - Script"}
-        doc = service.documents().create(body=body).execute()
-        title = doc.get("title")
-        video_script_doc_id = doc.get("documentId")
-        yt_video[
-            "script_url"
-        ] = "https://docs.google.com/document/d/video_script_doc_id/edit"
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+        creds = flow.run_local_server(port=0)
 
+    service = build("docs", "v1", credentials=creds)
 
-    def gdoc_set_script():
-        # Text insertion
-        gdoc_text = [
-            {
-                "insertText": {
-                    "location": {
-                        "index": 1,
-                    },
-                    "text": yt_video["script"],
-                }
+    body = {"title": yt_video["video_number"] + yt_video["title"] + " - Script"}
+    doc = service.documents().create(body=body).execute()
+    title = doc.get("title")
+    video_script_doc_id = doc.get("documentId")
+    yt_video[
+        "script_url"
+    ] = "https://docs.google.com/document/d/video_script_doc_id/edit"
+
+    print(yt_video)
+
+    # Text insertion
+    gdoc_text = [
+        {
+            "insertText": {
+                "location": {
+                    "index": 1,
+                },
+                "text": yt_video["script"],
             }
-        ]
-        result = (
-            service.documents()
-            .batchUpdate(documentId=video_script_doc_id, body={"requests": gdoc_text})
-            .execute()
-        )
+        }
+    ]
+    result = (
+        service.documents()
+        .batchUpdate(documentId=video_script_doc_id, body={"requests": gdoc_text})
+        .execute()
+    )
 
     def create_new_trello_list(name, board):
         url = "https://api.trello.com/1/lists"
@@ -264,43 +259,41 @@ def main():
 
         print(response.text)
 
-    def trello_create_from_template():
-        # def clone_trello_card(name, list_id, card_id):
-        url = "https://api.trello.com/1/cards"
+    # def clone_trello_card(name, list_id, card_id):
+    url = "https://api.trello.com/1/cards"
 
-        headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json"}
 
-        query = {
-            "key": keys["trello_api_key"],
-            "token": keys["trello_token"],
-            "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
-            "idCardSource": creator["thefirearmguy"]["trello_short_tamplate_id"],
-            "idList": creator["thefirearmguy"]["trello_shorts_list_id"],
-            "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
-            "name": yt_video["title"],
-        }
+    query = {
+        "key": keys["trello_api_key"],
+        "token": keys["trello_token"],
+        "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
+        "idCardSource": creator["thefirearmguy"]["trello_short_tamplate_id"],
+        "idList": creator["thefirearmguy"]["trello_shorts_list_id"],
+        "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
+        "name": yt_video["title"],
+    }
 
-        response = requests.request("POST", url, headers=headers, params=query)
-        creator["thefirearmguy"]["trello_new_card_id"] = json.loads(response.text)["id"]
+    response = requests.request("POST", url, headers=headers, params=query)
+    creator["thefirearmguy"]["trello_new_card_id"] = json.loads(response.text)["id"]
 
-    def trello_update_custom_field():
-        url = (
-            "https://api.trello.com/1/cards/"
-            + creator["thefirearmguy"]["trello_new_card_id"]
-            + "/customField/64ca69028b331b036679c2ab/item"
-        )
+    url = (
+        "https://api.trello.com/1/cards/"
+        + creator["thefirearmguy"]["trello_new_card_id"]
+        + "/customField/64ca69028b331b036679c2ab/item"
+    )
 
-        headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json"}
 
-        query = {
-            "key": "507e54976cbef96c4b8e1b5b883f4639",
-            "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
-        }
+    query = {
+        "key": "507e54976cbef96c4b8e1b5b883f4639",
+        "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+    }
 
-        payload = json.dumps({"value": {"text": yt_video["script_url"]}})
+    payload = json.dumps({"value": {"text": yt_video["script_url"]}})
 
-        response = requests.request("PUT", url, data=payload, headers=headers, params=query)
-        print(response.text)
+    response = requests.request("PUT", url, data=payload, headers=headers, params=query)
+    print(response.text)
 
 
 if __name__ == "__main__":
