@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-# -*- coding: utf-8 -*-
-
-# Sample Python code for youtube.videos.list
-# See instructions for running these code samples locally:
-# https://developers.google.com/explorer-help/code-samples#python
-
 import os
 import io
 import re
@@ -68,6 +62,7 @@ SCOPES = [
 
 creator = {
     "thefirearmguy": {
+        "dropbox_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
         "trello_board_id": "64c709c04259bef49a00c5de",
         "trello_dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
         "trello_longformat_list_id": "64baa956447059d528377b87",
@@ -89,7 +84,6 @@ creator = {
 
 yt_video = {
     "title": "",
-    "url": "",
     "video_number": "",
     "id": "",
     "description": "",
@@ -97,42 +91,64 @@ yt_video = {
     "storage_location": "",
     "video_url": "",
     "script_url": "",
-    "shorts_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
-    "long_format_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Long Format/",
     "new_trello_card_id": "",
     "video_length": "",
     "thumbnail_path": "",
 }
 
 
-def main():
+# channel
+# channel RangeOfVideos=[4,14] month="jan" samescript="yes/no" script="script ID if not new doc" chat_gpt="instructions"
 
-    yt_video["video_url"] = "https://youtube.com/shorts/giid2QYVKo0"
 
-    def set_video_id(video_url):
+# options to have
+# link month
+
+# list of differente videos from differente channels
+# link link link link month
+
+
+class Lang2views:
+    def __init__(self, video_links, creator_name):
+        self.video_links = video_links
+        self.creator_name = creator_name
+        yt_video["video_url"] = video_links
+
+        # authenticate for youtube.com
         yt_video["id"] = extract.video_id(yt_video["video_url"])
+        self.youtube_auth = build("youtube", "v3", developerKey=keys["youtube_api_key"])
+        self.youtube_auth = self.youtube_auth.videos().list(
+            part="snippet", id=yt_video["id"]
+        )
+        self.youtube_auth = self.youtube_auth.execute()
 
-    def yt_authenticate():
-        youtube = build("youtube", "v3", developerKey=keys["youtube_api_key"])
-        video_request = youtube.videos().list(part="snippet", id=yt_video["id"])
-        video_response = video_request.execute()
+        # authenticate for google docs
+        if os.path.exists("token.json"):
+            creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            creds = flow.run_local_server(port=0)
 
-    def set_video_title():
-        yt_video["title"] = video_response["items"][0]["snippet"]["title"]
+        self.gdocs_auth = build("docs", "v1", credentials=creds)
 
-    def set_video_description():
-        yt_video["description"] = video_response["items"][0]["snippet"]["description"]
+    def set_video_title(self):
+        yt_video["title"] = self.youtube_auth["items"][0]["snippet"]["title"]
 
-    def set_video_tags():
-        yt_video["tags"] = video_response["items"][0]["snippet"]["tags"]
+    def set_video_description(self):
+        yt_video["description"] = self.youtube_auth["items"][0]["snippet"][
+            "description"
+        ]
 
-    def set_video_number
-        shorts_folders = os.listdir(yt_video["shorts_path"])
+    def set_video_tags(self):
+        yt_video["tags"] = self.youtube_auth["items"][0]["snippet"]["tags"]
+
+    def set_video_number(self):
+        shorts_folders = os.listdir(creator[self.creator_name]["dropbox_path"])
         shorts_folders = sorted(shorts_folders)
         video_number = str(shorts_folders[-1][0:2])
         yt_video["video_number"] = video_number
 
-    def create_dropbox_video_folder():
+    def create_dropbox_video_folder(self):
         if (
             os.listdir(
                 yt_video["shorts_path"]
@@ -149,9 +165,9 @@ def main():
                 + yt_video["title"]
             )
 
-    def download_video():
+    def download_video(self):
         output_path = (
-            yt_video["shorts_path"]
+            creator[self.creator_name]["dropbox_path"]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
@@ -162,7 +178,7 @@ def main():
         video_stream = yt.streams.get_highest_resolution()
         video_stream.download(output_path)
 
-    def convert_video_to_audio():
+    def convert_video_to_audio(self):
         # Load the video file
         input_file = ffmpeg.input(
             yt_video["shorts_path"]
@@ -186,7 +202,7 @@ def main():
             acodec="mp3",
         ).run()
 
-    def transcribe_video():
+    def transcribe_video(self):
         model = whisper.load_model("base")
         result = model.transcribe(
             yt_video["shorts_path"]
@@ -199,7 +215,7 @@ def main():
         )
         yt_video["script"] = result["text"]
 
-    def count_video_length()
+    def count_video_length(self):
         audio = MP3(
             yt_video["shorts_path"]
             + yt_video["video_number"]
@@ -209,30 +225,18 @@ def main():
             + yt_video["title"]
             + ".mp3"
         )
+        yt_video["length"] = audio.info.length
 
-        yt_video["length"] = audio.info.length)
-
-
-    def gdoc_authenticate():
-        if os.path.exists("token.json"):
-            creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-
-        service = build("docs", "v1", credentials=creds)
-
-    def gdoc_set_doc_title():
+    def gdoc_set_doc_title(self):
         body = {"title": yt_video["video_number"] + yt_video["title"] + " - Script"}
-        doc = service.documents().create(body=body).execute()
+        doc = self.gdocs_auth.documents().create(body=body).execute()
         title = doc.get("title")
-        video_script_doc_id = doc.get("documentId")
+        self.video_script_doc_id = doc.get("documentId")
         yt_video[
             "script_url"
         ] = "https://docs.google.com/document/d/video_script_doc_id/edit"
 
-
-    def gdoc_set_script():
+    def gdoc_set_script(self):
         # Text insertion
         gdoc_text = [
             {
@@ -245,8 +249,10 @@ def main():
             }
         ]
         result = (
-            service.documents()
-            .batchUpdate(documentId=video_script_doc_id, body={"requests": gdoc_text})
+            self.gdocs_auth.documents()
+            .batchUpdate(
+                documentId=self.video_script_doc_id, body={"requests": gdoc_text}
+            )
             .execute()
         )
 
@@ -299,8 +305,31 @@ def main():
 
         payload = json.dumps({"value": {"text": yt_video["script_url"]}})
 
-        response = requests.request("PUT", url, data=payload, headers=headers, params=query)
+        response = requests.request(
+            "PUT", url, data=payload, headers=headers, params=query
+        )
         print(response.text)
+
+
+def main():
+    month = "01"
+    creator = "thefirearmguy"
+
+    translated_video = Lang2views(
+        "https://www.youtube.com/shorts/g7QtnCEWhfE", "thefirearmguy"
+    )
+    translated_video.set_video_title()
+    translated_video.set_video_description()
+    translated_video.set_video_tags()
+    translated_video.set_video_number()
+    translated_video.download_video()
+    translated_video.convert_video_to_audio()
+    translated_video.transcribe_video()
+    translated_video.count_video_length()
+    translated_video.count_video_length()
+    translated_video.gdoc_set_doc_title()
+    translated_video.gdoc_set_script()
+    print(yt_video)
 
 
 if __name__ == "__main__":
