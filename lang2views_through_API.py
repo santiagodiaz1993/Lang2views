@@ -62,7 +62,7 @@ SCOPES = [
 
 creator = {
     "thefirearmguy": {
-        "dropbox_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
+        "dropbox_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/",
         "trello_board_id": "64c709c04259bef49a00c5de",
         "trello_dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
         "trello_longformat_list_id": "64baa956447059d528377b87",
@@ -142,32 +142,40 @@ class Lang2views:
     def set_video_tags(self):
         yt_video["tags"] = self.youtube_auth["items"][0]["snippet"]["tags"]
 
-    def set_video_number(self):
-        shorts_folders = os.listdir(creator[self.creator_name]["dropbox_path"])
+    def set_video_number(self, video_type):
+        print(video_type)
+        shorts_folders = os.listdir(
+            creator[self.creator_name]["dropbox_path"] + video_type
+        )
         shorts_folders = sorted(shorts_folders)
         video_number = str(shorts_folders[-1][0:2])
         yt_video["video_number"] = video_number
 
-    def create_dropbox_video_folder(self):
-        if (
-            os.listdir(
-                yt_video["shorts_path"]
-                + yt_video["video_number"]
-                + ". "
-                + yt_video["title"]
-            )
-            == None
-        ):
-            os.mkdir(
-                yt_video["shorts_path"]
-                + yt_video["video_number"]
-                + ". "
-                + yt_video["title"]
-            )
+    def create_dropbox_video_folder(self, video_type):
+        # if (
+        #     os.listdir(
+        #         creator[self.creator_name]["dropbox_path"]
+        #         + yt_video["video_number"]
+        #         + ". "
+        #         + yt_video["title"]
+        #     )
+        #     == None
+        # ):
+        os.mkdir(
+            creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
+            + yt_video["video_number"]
+            + ". "
+            + yt_video["title"]
+        )
+        print(yt_video)
 
-    def download_video(self):
+    def download_video(self, video_type):
         output_path = (
             creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
@@ -178,10 +186,11 @@ class Lang2views:
         video_stream = yt.streams.get_highest_resolution()
         video_stream.download(output_path)
 
-    def convert_video_to_audio(self):
-        # Load the video file
+    def convert_video_to_audio(self, video_type):
         input_file = ffmpeg.input(
-            yt_video["shorts_path"]
+            creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
@@ -192,7 +201,7 @@ class Lang2views:
 
         # Extract the audio and save it as an MP3 file
         input_file.output(
-            yt_video["shorts_path"]
+            creator[self.creator_name]["dropbox_path"]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
@@ -205,7 +214,7 @@ class Lang2views:
     def transcribe_video(self):
         model = whisper.load_model("base")
         result = model.transcribe(
-            yt_video["shorts_path"]
+            creator[self.creator_name]["dropbox_path"]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
@@ -314,6 +323,7 @@ class Lang2views:
 def main():
     month = "01"
     creator = "thefirearmguy"
+    video_type = "Shorts"
 
     translated_video = Lang2views(
         "https://www.youtube.com/shorts/g7QtnCEWhfE", "thefirearmguy"
@@ -321,15 +331,16 @@ def main():
     translated_video.set_video_title()
     translated_video.set_video_description()
     translated_video.set_video_tags()
-    translated_video.set_video_number()
-    translated_video.download_video()
-    translated_video.convert_video_to_audio()
-    translated_video.transcribe_video()
-    translated_video.count_video_length()
-    translated_video.count_video_length()
-    translated_video.gdoc_set_doc_title()
-    translated_video.gdoc_set_script()
-    print(yt_video)
+    translated_video.set_video_number(video_type)
+    translated_video.create_dropbox_video_folder(video_type)
+    translated_video.download_video(video_type)
+    translated_video.convert_video_to_audio(video_type)
+    # translated_video.transcribe_video()
+    # translated_video.count_video_length()
+    # translated_video.count_video_length()
+    # translated_video.gdoc_set_doc_title()
+    # translated_video.gdoc_set_script()
+    # print(yt_video)
 
 
 if __name__ == "__main__":
