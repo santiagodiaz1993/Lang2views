@@ -10,6 +10,8 @@ import requests
 import json
 import ffmpeg
 from mutagen.mp3 import MP3
+import moviepy.editor as mp
+import time
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -143,7 +145,6 @@ class Lang2views:
         yt_video["tags"] = self.youtube_auth["items"][0]["snippet"]["tags"]
 
     def set_video_number(self, video_type):
-        print(video_type)
         shorts_folders = os.listdir(
             creator[self.creator_name]["dropbox_path"] + video_type
         )
@@ -151,25 +152,26 @@ class Lang2views:
         video_number = str(shorts_folders[-1][0:2])
         yt_video["video_number"] = video_number
 
-    def create_dropbox_video_folder(self, video_type):
-        # if (
-        #     os.listdir(
-        #         creator[self.creator_name]["dropbox_path"]
-        #         + yt_video["video_number"]
-        #         + ". "
-        #         + yt_video["title"]
-        #     )
-        #     == None
-        # ):
-        os.mkdir(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
-        )
-        print(yt_video)
+    # def create_dropbox_video_folder(self, video_type):
+    #     # if (
+    #     #     os.listdir(
+    #     #         creator[self.creator_name]["dropbox_path"]
+    #     #         + video_type
+    #     #         + "/"
+    #     #         + yt_video["video_number"]
+    #     #         + ". "
+    #     #         + yt_video["title"]
+    #     #     )
+    #     #     == None
+    #     # ):
+    #     os.mkdir(
+    #         creator[self.creator_name]["dropbox_path"]
+    #         + video_type
+    #         + "/"
+    #         + yt_video["video_number"]
+    #         + ". "
+    #         + yt_video["title"]
+    #     )
 
     def download_video(self, video_type):
         output_path = (
@@ -187,7 +189,7 @@ class Lang2views:
         video_stream.download(output_path)
 
     def convert_video_to_audio(self, video_type):
-        input_file = ffmpeg.input(
+        file_name = os.listdir(
             creator[self.creator_name]["dropbox_path"]
             + video_type
             + "/"
@@ -195,32 +197,51 @@ class Lang2views:
             + ". "
             + yt_video["title"]
             + "/"
-            + yt_video["title"]
-            + ".mp4"
-        )
+        )[0]
 
-        # Extract the audio and save it as an MP3 file
-        input_file.output(
+        clip = mp.VideoFileClip(
             creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
             + "/"
+            + file_name
+        )
+        clip.audio.write_audiofile(
+            creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
+            + yt_video["video_number"]
+            + ". "
             + yt_video["title"]
-            + ".mp3",
-            acodec="mp3",
-        ).run()
+            + "/"
+            + file_name
+            + "_audio_only.mp3"
+        )
 
-    def transcribe_video(self):
+    def transcribe_video(self, video_type):
+        file_name = os.listdir(
+            creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
+            + yt_video["video_number"]
+            + ". "
+            + yt_video["title"]
+            + "/"
+        )[0]
+
         model = whisper.load_model("base")
         result = model.transcribe(
             creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
             + "/"
-            + yt_video["title"]
-            + ".mp3"
+            + file_name
         )
         yt_video["script"] = result["text"]
 
@@ -321,6 +342,7 @@ class Lang2views:
 
 
 def main():
+
     month = "01"
     creator = "thefirearmguy"
     video_type = "Shorts"
@@ -332,10 +354,10 @@ def main():
     translated_video.set_video_description()
     translated_video.set_video_tags()
     translated_video.set_video_number(video_type)
-    translated_video.create_dropbox_video_folder(video_type)
+    # translated_video.create_dropbox_video_folder(video_type)
     translated_video.download_video(video_type)
     translated_video.convert_video_to_audio(video_type)
-    # translated_video.transcribe_video()
+    translated_video.transcribe_video(video_type)
     # translated_video.count_video_length()
     # translated_video.count_video_length()
     # translated_video.gdoc_set_doc_title()
