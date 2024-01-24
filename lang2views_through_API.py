@@ -86,6 +86,7 @@ creator = {
 
 yt_video = {
     "title": "",
+    "downloaded_video_name": "",
     "video_number": "",
     "id": "",
     "description": "",
@@ -189,7 +190,7 @@ class Lang2views:
         video_stream.download(output_path)
 
     def convert_video_to_audio(self, video_type):
-        file_name = os.listdir(
+        yt_video["downloaded_video_name"] = os.listdir(
             creator[self.creator_name]["dropbox_path"]
             + video_type
             + "/"
@@ -207,7 +208,7 @@ class Lang2views:
             + ". "
             + yt_video["title"]
             + "/"
-            + file_name
+            + yt_video["downloaded_video_name"]
         )
         clip.audio.write_audiofile(
             creator[self.creator_name]["dropbox_path"]
@@ -217,21 +218,11 @@ class Lang2views:
             + ". "
             + yt_video["title"]
             + "/"
-            + file_name
+            + yt_video["downloaded_video_name"]
             + "_audio_only.mp3"
         )
 
     def transcribe_video(self, video_type):
-        file_name = os.listdir(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
-            + "/"
-        )[0]
-
         model = whisper.load_model("base")
         result = model.transcribe(
             creator[self.creator_name]["dropbox_path"]
@@ -241,19 +232,21 @@ class Lang2views:
             + ". "
             + yt_video["title"]
             + "/"
-            + file_name
+            + yt_video["downloaded_video_name"]
         )
         yt_video["script"] = result["text"]
 
-    def count_video_length(self):
+    def count_video_length(self, video_type):
         audio = MP3(
-            yt_video["shorts_path"]
+            creator[self.creator_name]["dropbox_path"]
+            + video_type
+            + "/"
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
             + "/"
-            + yt_video["title"]
-            + ".mp3"
+            + yt_video["downloaded_video_name"]
+            + "_audio_only.mp3"
         )
         yt_video["length"] = audio.info.length
 
@@ -358,7 +351,7 @@ def main():
     translated_video.download_video(video_type)
     translated_video.convert_video_to_audio(video_type)
     translated_video.transcribe_video(video_type)
-    # translated_video.count_video_length()
+    translated_video.count_video_length(video_type)
     # translated_video.count_video_length()
     # translated_video.gdoc_set_doc_title()
     # translated_video.gdoc_set_script()
