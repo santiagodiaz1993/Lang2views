@@ -417,8 +417,9 @@ class Lang2views:
         import json
 
         url = (
-            "https://api.trello.com/1/cards/"
-            + yt_video["YouTubeVideoInfo"]["trello_card_id"]
+            "https://api.trello.com/1/boards/"
+            + "64c709c04259bef49a00c5de"
+            + "/customFields"
         )
 
         headers = {"Accept": "application/json"}
@@ -426,19 +427,19 @@ class Lang2views:
         query = {
             "key": keys["trello_api_key"],
             "token": keys["trello_token"],
-            "customFieldItems": "true",
         }
 
         response = requests.request("GET", url, headers=headers, params=query)
+        # print(response)
 
-        print(
-            json.dumps(
-                json.loads(response.text),
-                sort_keys=True,
-                indent=4,
-                separators=(",", ": "),
-            )
-        )
+        # response = json.dumps(
+        #     json.loads(response.text),
+        #     sort_keys=True,
+        #     indent=4,
+        #     separators=(",", ": "),
+        # )
+
+        print(json.loads(response.text)[0])
 
     def trello_update_custom_field():
         url = (
@@ -485,7 +486,7 @@ def main():
     # translated_video.gdoc_set_doc_title()
     # translated_video.gdoc_set_script()
     # translated_video.check_video_type()
-    translated_video.trello_create_from_template()
+    # translated_video.trello_create_from_template()
     translated_video.trello_get_card_info()
     # print(yt_video)
 
