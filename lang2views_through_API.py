@@ -81,9 +81,9 @@ creator = {
         "Long_Format": "/home/santiago/Dropbox/Lang2views/Client Projects/Long Format/",
         "trello_board_id": "64c709c04259bef49a00c5de",
         "trello_dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
-        "trello_longformat_list_id": "64baa956447059d528377b87",
+        "trello_longformat_list_id": "65b7c56bbbbb8c9b0bff06a5",
         "trello_longformat_script_field_ID": "64ca69028b331b036679c2ab",
-        "trello_shorts_list_id": "64c709c04259bef49a00c5df",
+        "trello_shorts_list_id": "65b7c56bbbbb8c9b0bff06a5",
         "trello_short_script_field_id": "6537d7173e68b703e6327632",
         "trello_short_tamplate_id": "64ca6c0f94fc3cee563f130b",
         "trello_longformat_template_id": "",
@@ -92,20 +92,28 @@ creator = {
 }
 
 yt_video = {
-    "title": "",
-    "video_type": "",
-    "channel_name": "",
-    "downloaded_video_name": "",
-    "video_number": "",
-    "id": "",
-    "description": "",
-    "tags": "",
-    "storage_location": "",
-    "video_url": "",
-    "script_url": "",
-    "new_trello_card_id": "",
-    "video_length": "",
-    "thumbnail_path": "",
+    "YouTubeVideoInfo": {
+        "title": "",
+        "video_type": "",
+        "channel_name": "",
+        "downloaded_video_name": "",
+        "video_number": "",
+        "id": "",
+        "description": "",
+        "tags": "",
+        "storage_location": "",
+        "video_url": "",
+        "script_url": "",
+        "new_trello_card_id": "",
+        "video_length": "",
+        "thumbnail_path": "",
+    },
+    "VideoTrelloInfo": {
+        "DatePublished": "",
+        "OriginalVideoLink": "",
+        "VideoLength": "",
+        "TranslatedScript": "",
+    },
 }
 
 
@@ -144,13 +152,15 @@ def convert_YouTube_duration_to_seconds(duration):
 class Lang2views:
     def __init__(self, video_link):
         self.video_link = video_link
-        yt_video["video_url"] = video_link
+        yt_video["YouTubeVideoInfo"]["video_url"] = video_link
 
         # authenticate for youtube.com
-        yt_video["id"] = extract.video_id(yt_video["video_url"])
+        yt_video["YouTubeVideoInfo"]["id"] = extract.video_id(
+            yt_video["YouTubeVideoInfo"]["video_url"]
+        )
         self.youtube_auth = build("youtube", "v3", developerKey=keys["youtube_api_key"])
         self.youtube_auth = self.youtube_auth.videos().list(
-            part="snippet", id=yt_video["id"]
+            part="snippet", id=yt_video["YouTubeVideoInfo"]["id"]
         )
         self.youtube_auth = self.youtube_auth.execute()
 
@@ -170,51 +180,57 @@ class Lang2views:
             "youtube", "v3", developerKey=keys["youtube_api_key"]
         )
         self.youtube_auth_content_det = self.youtube_auth_content_det.videos().list(
-            part="contentDetails", id=yt_video["id"]
+            part="contentDetails", id=yt_video["YouTubeVideoInfo"]["id"]
         )
         self.youtube_auth_content_det = self.youtube_auth_content_det.execute()
 
         dur = self.youtube_auth_content_det["items"][0]["contentDetails"]["duration"]
 
         if convert_YouTube_duration_to_seconds(dur) >= 60:
-            yt_video["video_type"] = "Long_Format"
+            yt_video["YouTubeVideoInfo"]["video_type"] = "Long_Format"
             self.video_type = "Long_Format"
         else:
             self.video_type = "Shorts"
-            yt_video["video_type"] = "Shorts"
+            yt_video["YouTubeVideoInfo"]["video_type"] = "Shorts"
 
     def get_channel_name(self):
         self.youtube_auth_content_det = build(
             "youtube", "v3", developerKey=keys["youtube_api_key"]
         )
         self.youtube_auth_content_det = self.youtube_auth_content_det.videos().list(
-            part="snippet", id=yt_video["id"]
+            part="snippet", id=yt_video["YouTubeVideoInfo"]["id"]
         )
 
-        yt_video["channel_name"] = self.youtube_auth_content_det.execute()["items"][0][
-            "snippet"
-        ]["channelTitle"]
+        yt_video["YouTubeVideoInfo"][
+            "channel_name"
+        ] = self.youtube_auth_content_det.execute()["items"][0]["snippet"][
+            "channelTitle"
+        ]
 
         self.creator_name = self.youtube_auth_content_det.execute()["items"][0][
             "snippet"
         ]["channelTitle"]
 
     def set_video_title(self):
-        yt_video["title"] = self.youtube_auth["items"][0]["snippet"]["title"]
+        yt_video["YouTubeVideoInfo"]["title"] = self.youtube_auth["items"][0][
+            "snippet"
+        ]["title"]
 
     def set_video_description(self):
-        yt_video["description"] = self.youtube_auth["items"][0]["snippet"][
-            "description"
-        ]
+        yt_video["YouTubeVideoInfo"]["description"] = self.youtube_auth["items"][0][
+            "snippet"
+        ]["description"]
 
     def set_video_tags(self):
-        yt_video["tags"] = self.youtube_auth["items"][0]["snippet"]["tags"]
+        yt_video["YouTubeVideoInfo"]["tags"] = self.youtube_auth["items"][0]["snippet"][
+            "tags"
+        ]
 
     def set_video_number(self):
         shorts_folders = os.listdir(creator[self.creator_name][self.video_type])
         shorts_folders = sorted(shorts_folders)
         video_number = str(shorts_folders[-1][0:2])
-        yt_video["video_number"] = video_number
+        yt_video["YouTubeVideoInfo"]["video_number"] = video_number
 
     def create_dropbox_video_folder(self):
         path = creator[self.creator_name][self.video_type]
@@ -231,7 +247,10 @@ class Lang2views:
         # )
         shutil.copytree(
             path + "00. Template Folder",
-            path + yt_video["video_number"] + ". " + yt_video["title"],
+            path
+            + yt_video["YouTubeVideoInfo"]["video_number"]
+            + ". "
+            + yt_video["title"],
         )
         # os.popen(
         #     'cp -r "'
@@ -248,43 +267,43 @@ class Lang2views:
     def download_video(self):
         output_path = (
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/"
             + "Original Video"
         )
 
-        yt = YouTube(yt_video["video_url"])
+        yt = YouTube(yt_video["YouTubeVideoInfo"]["video_url"])
         video_stream = yt.streams.get_highest_resolution()
         video_stream.download(output_path)
 
     def convert_video_to_audio(self):
-        yt_video["downloaded_video_name"] = os.listdir(
+        yt_video["YouTubeVideoInfo"]["downloaded_video_name"] = os.listdir(
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/"
             + "Original Video"
         )[0]
 
         clip = mp.VideoFileClip(
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/"
             + "Original Video/"
-            + yt_video["downloaded_video_name"]
+            + yt_video["YouTubeVideoInfo"]["downloaded_video_name"]
         )
         clip.audio.write_audiofile(
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/Sound Design/Background/"
-            + yt_video["downloaded_video_name"]
+            + yt_video["YouTubeVideoInfo"]["downloaded_video_name"]
             + "_audio_only.mp3"
         )
 
@@ -292,23 +311,23 @@ class Lang2views:
         model = whisper.load_model("base")
         result = model.transcribe(
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/Sound Design/Background/"
-            + yt_video["downloaded_video_name"]
+            + yt_video["YouTubeVideoInfo"]["downloaded_video_name"]
             + "_audio_only.mp3"
         )
-        yt_video["script"] = result["text"]
+        yt_video["YouTubeVideoInfo"]["script"] = result["text"]
 
     def count_video_length(self):
         audio = MP3(
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/Sound Design/Background/"
-            + yt_video["downloaded_video_name"]
+            + yt_video["YouTubeVideoInfo"]["downloaded_video_name"]
             + "_audio_only.mp3"
         )
         yt_video["length"] = audio.info.length
@@ -316,20 +335,24 @@ class Lang2views:
     def save_video_info(self):
         path = (
             creator[self.creator_name][self.video_type]
-            + yt_video["video_number"]
+            + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"]
+            + yt_video["YouTubeVideoInfo"]["title"]
             + "/"
         )
         with open(path + "video_info.json", "w") as outfile:
             json.dump(yt_video, outfile)
 
     def gdoc_set_doc_title(self):
-        body = {"title": yt_video["video_number"] + yt_video["title"] + " - Script"}
+        body = {
+            "title": yt_video["YouTubeVideoInfo"]["video_number"]
+            + yt_video["YouTubeVideoInfo"]["title"]
+            + " - Script"
+        }
         doc = self.gdocs_auth.documents().create(body=body).execute()
         title = doc.get("title")
         self.video_script_doc_id = doc.get("documentId")
-        yt_video[
+        yt_video["YouTubeVideoInfo"][
             "script_url"
         ] = "https://docs.google.com/document/d/video_script_doc_id/edit"
 
@@ -341,7 +364,7 @@ class Lang2views:
                     "location": {
                         "index": 1,
                     },
-                    "text": yt_video["script"],
+                    "text": yt_video["YouTubeVideoInfo"]["script"],
                 }
             }
         ]
@@ -367,7 +390,7 @@ class Lang2views:
 
         print(response.text)
 
-    def trello_create_from_template():
+    def trello_create_from_template(self):
         # def clone_trello_card(name, list_id, card_id):
         url = "https://api.trello.com/1/cards"
 
@@ -377,19 +400,50 @@ class Lang2views:
             "key": keys["trello_api_key"],
             "token": keys["trello_token"],
             "dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
-            "idCardSource": creator["thefirearmguy"]["trello_short_tamplate_id"],
-            "idList": creator["thefirearmguy"]["trello_shorts_list_id"],
+            "idCardSource": creator[self.creator_name]["trello_short_tamplate_id"],
+            "idList": creator[self.creator_name]["trello_shorts_list_id"],
             "keepFromSource": "checklists,attachments,stickers,members,labels,customFields",
-            "name": yt_video["title"],
+            "name": yt_video["YouTubeVideoInfo"]["title"],
         }
 
         response = requests.request("POST", url, headers=headers, params=query)
-        creator["thefirearmguy"]["trello_new_card_id"] = json.loads(response.text)["id"]
+        print(json.loads(response.text))
+        yt_video["YouTubeVideoInfo"]["trello_card_id"] = json.loads(response.text)["id"]
+
+    def trello_get_card_info(self):
+        # This code sample uses the 'requests' library:
+        # http://docs.python-requests.org
+        import requests
+        import json
+
+        url = (
+            "https://api.trello.com/1/cards/"
+            + yt_video["YouTubeVideoInfo"]["trello_card_id"]
+        )
+
+        headers = {"Accept": "application/json"}
+
+        query = {
+            "key": keys["trello_api_key"],
+            "token": keys["trello_token"],
+            "customFieldItems": "true",
+        }
+
+        response = requests.request("GET", url, headers=headers, params=query)
+
+        print(
+            json.dumps(
+                json.loads(response.text),
+                sort_keys=True,
+                indent=4,
+                separators=(",", ": "),
+            )
+        )
 
     def trello_update_custom_field():
         url = (
             "https://api.trello.com/1/cards/"
-            + creator["thefirearmguy"]["trello_new_card_id"]
+            + yt_video["YouTubeVideoInfo"]["trello_card_id"]
             + "/customField/64ca69028b331b036679c2ab/item"
         )
 
@@ -400,7 +454,9 @@ class Lang2views:
             "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
         }
 
-        payload = json.dumps({"value": {"text": yt_video["script_url"]}})
+        payload = json.dumps(
+            {"value": {"text": yt_video["YouTubeVideoInfo"]["script_url"]}}
+        )
 
         response = requests.request(
             "PUT", url, data=payload, headers=headers, params=query
@@ -416,11 +472,11 @@ def main():
 
     translated_video.check_video_type()
     translated_video.get_channel_name()
-    translated_video.set_video_title()
-    translated_video.set_video_description()
-    translated_video.set_video_tags()
-    translated_video.set_video_number()
-    translated_video.create_dropbox_video_folder()
+    # translated_video.set_video_title()
+    # translated_video.set_video_description()
+    # translated_video.set_video_tags()
+    # translated_video.set_video_number()
+    # translated_video.create_dropbox_video_folder()
     # translated_video.download_video()
     # translated_video.convert_video_to_audio()
     # translated_video.transcribe_video()
@@ -429,7 +485,9 @@ def main():
     # translated_video.gdoc_set_doc_title()
     # translated_video.gdoc_set_script()
     # translated_video.check_video_type()
-    print(yt_video)
+    translated_video.trello_create_from_template()
+    translated_video.trello_get_card_info()
+    # print(yt_video)
 
 
 if __name__ == "__main__":
