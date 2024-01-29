@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+
+# Video
+#     Video meta information
+#     translation
+#     file_managment
+#
+#
+# Tiketing
+
+
 import os
 import io
 import re
+import shutil
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import requests
@@ -63,11 +74,11 @@ gdocs_scopes = [
 ]
 
 creator = {
-    "thefirearmguy": {
+    "TheFireArmGuy": {
         "monthly_shorts": "",
         "monthly_long_format": "",
-        "dropbox_shorts_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
-        "dropbox_long_format_path": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Long Format/",
+        "Shorts": "/home/santiago/Dropbox/Lang2views/Client Projects/TheFireArmGuy/Shorts/",
+        "Long_Format": "/home/santiago/Dropbox/Lang2views/Client Projects/Long Format/",
         "trello_board_id": "64c709c04259bef49a00c5de",
         "trello_dsc": "d6d31c3e05df5ae75e15f18f7fd38a00cc0eff6209a01b43b36fbfd88df3dbac",
         "trello_longformat_list_id": "64baa956447059d528377b87",
@@ -98,12 +109,42 @@ yt_video = {
 }
 
 
-class Lang2views:
-    def __init__(self, video_links, creator_name):
-        self.video_links = video_links
-        self.creator_name = creator_name
+def convert_YouTube_duration_to_seconds(duration):
+    day_time = duration.split("T")
+    day_duration = day_time[0].replace("P", "")
+    day_list = day_duration.split("D")
+    if len(day_list) == 2:
+        day = int(day_list[0]) * 60 * 60 * 24
+        day_list = day_list[1]
+    else:
+        day = 0
+        day_list = day_list[0]
+    hour_list = day_time[1].split("H")
+    if len(hour_list) == 2:
+        hour = int(hour_list[0]) * 60 * 60
+        hour_list = hour_list[1]
+    else:
+        hour = 0
+        hour_list = hour_list[0]
+    minute_list = hour_list.split("M")
+    if len(minute_list) == 2:
+        minute = int(minute_list[0]) * 60
+        minute_list = minute_list[1]
+    else:
+        minute = 0
+        minute_list = minute_list[0]
+    second_list = minute_list.split("S")
+    if len(second_list) == 2:
+        second = int(second_list[0])
+    else:
+        second = 0
+    return day + hour + minute + second
 
-        yt_video["video_url"] = video_links
+
+class Lang2views:
+    def __init__(self, video_link):
+        self.video_link = video_link
+        yt_video["video_url"] = video_link
 
         # authenticate for youtube.com
         yt_video["id"] = extract.video_id(yt_video["video_url"])
@@ -135,41 +176,12 @@ class Lang2views:
 
         dur = self.youtube_auth_content_det["items"][0]["contentDetails"]["duration"]
 
-        def convert_YouTube_duration_to_seconds(duration):
-            day_time = duration.split("T")
-            day_duration = day_time[0].replace("P", "")
-            day_list = day_duration.split("D")
-            if len(day_list) == 2:
-                day = int(day_list[0]) * 60 * 60 * 24
-                day_list = day_list[1]
-            else:
-                day = 0
-                day_list = day_list[0]
-            hour_list = day_time[1].split("H")
-            if len(hour_list) == 2:
-                hour = int(hour_list[0]) * 60 * 60
-                hour_list = hour_list[1]
-            else:
-                hour = 0
-                hour_list = hour_list[0]
-            minute_list = hour_list.split("M")
-            if len(minute_list) == 2:
-                minute = int(minute_list[0]) * 60
-                minute_list = minute_list[1]
-            else:
-                minute = 0
-                minute_list = minute_list[0]
-            second_list = minute_list.split("S")
-            if len(second_list) == 2:
-                second = int(second_list[0])
-            else:
-                second = 0
-            return day + hour + minute + second
-
         if convert_YouTube_duration_to_seconds(dur) >= 60:
-            yt_video["video_type"] = "long format"
+            yt_video["video_type"] = "Long_Format"
+            self.video_type = "Long_Format"
         else:
-            yt_video["video_type"] = "short"
+            self.video_type = "Shorts"
+            yt_video["video_type"] = "Shorts"
 
     def get_channel_name(self):
         self.youtube_auth_content_det = build(
@@ -180,6 +192,10 @@ class Lang2views:
         )
 
         yt_video["channel_name"] = self.youtube_auth_content_det.execute()["items"][0][
+            "snippet"
+        ]["channelTitle"]
+
+        self.creator_name = self.youtube_auth_content_det.execute()["items"][0][
             "snippet"
         ]["channelTitle"]
 
@@ -194,110 +210,119 @@ class Lang2views:
     def set_video_tags(self):
         yt_video["tags"] = self.youtube_auth["items"][0]["snippet"]["tags"]
 
-    def set_video_number(self, video_type):
-        shorts_folders = os.listdir(
-            creator[self.creator_name]["dropbox_path"] + video_type
-        )
+    def set_video_number(self):
+        shorts_folders = os.listdir(creator[self.creator_name][self.video_type])
         shorts_folders = sorted(shorts_folders)
         video_number = str(shorts_folders[-1][0:2])
         yt_video["video_number"] = video_number
 
-    def create_dropbox_video_folder(self, video_type):
-        # if (
-        #     os.listdir(
-        #         creator[self.creator_name]["dropbox_path"]
-        #         + video_type
-        #         + "/"
-        #         + yt_video["video_number"]
-        #         + ". "
-        #         + yt_video["title"]
-        #     )
-        #     == None
-        # ):
-        os.mkdir(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
-            + yt_video["video_number"]
-            + ". "
-            + yt_video["title"]
+    def create_dropbox_video_folder(self):
+        path = creator[self.creator_name][self.video_type]
+        # print(
+        #     'cp -r "'
+        #     + path
+        #     + '00. Template Folder"'
+        #     + ' "'
+        #     + path
+        #     + yt_video["video_number"]
+        #     + ". "
+        #     + yt_video["title"]
+        #     + '"'
+        # )
+        shutil.copytree(
+            path + "00. Template Folder",
+            path + yt_video["video_number"] + ". " + yt_video["title"],
         )
+        # os.popen(
+        #     'cp -r "'
+        #     + path
+        #     + '00. Template Folder"'
+        #     + ' "'
+        #     + path
+        #     + yt_video["video_number"]
+        #     + ". "
+        #     + yt_video["title"]
+        #     + '"'
+        # )
 
-    def download_video(self, video_type):
+    def download_video(self):
         output_path = (
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
+            creator[self.creator_name][self.video_type]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
             + "/"
+            + "Original Video"
         )
 
         yt = YouTube(yt_video["video_url"])
         video_stream = yt.streams.get_highest_resolution()
         video_stream.download(output_path)
 
-    def convert_video_to_audio(self, video_type):
+    def convert_video_to_audio(self):
         yt_video["downloaded_video_name"] = os.listdir(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
+            creator[self.creator_name][self.video_type]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
             + "/"
+            + "Original Video"
         )[0]
 
         clip = mp.VideoFileClip(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
+            creator[self.creator_name][self.video_type]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
             + "/"
+            + "Original Video/"
             + yt_video["downloaded_video_name"]
         )
         clip.audio.write_audiofile(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
+            creator[self.creator_name][self.video_type]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
-            + "/"
+            + "/Sound Design/Background/"
             + yt_video["downloaded_video_name"]
             + "_audio_only.mp3"
         )
 
-    def transcribe_video(self, video_type):
+    def transcribe_video(self):
         model = whisper.load_model("base")
         result = model.transcribe(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
+            creator[self.creator_name][self.video_type]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
-            + "/"
+            + "/Sound Design/Background/"
             + yt_video["downloaded_video_name"]
+            + "_audio_only.mp3"
         )
         yt_video["script"] = result["text"]
 
-    def count_video_length(self, video_type):
+    def count_video_length(self):
         audio = MP3(
-            creator[self.creator_name]["dropbox_path"]
-            + video_type
-            + "/"
+            creator[self.creator_name][self.video_type]
             + yt_video["video_number"]
             + ". "
             + yt_video["title"]
-            + "/"
+            + "/Sound Design/Background/"
             + yt_video["downloaded_video_name"]
             + "_audio_only.mp3"
         )
         yt_video["length"] = audio.info.length
+
+    def save_video_info(self):
+        path = (
+            creator[self.creator_name][self.video_type]
+            + yt_video["video_number"]
+            + ". "
+            + yt_video["title"]
+            + "/"
+        )
+        with open(path + "video_info.json", "w") as outfile:
+            json.dump(yt_video, outfile)
 
     def gdoc_set_doc_title(self):
         body = {"title": yt_video["video_number"] + yt_video["title"] + " - Script"}
@@ -385,20 +410,22 @@ class Lang2views:
 
 def main():
 
-    translated_video = Lang2views(
-        "https://www.youtube.com/watch?v=Q4p7Bb_GuCI", "thefirearmguy"
-    )
+    document_id = ""
+    all_in_same_socument = ""
+    translated_video = Lang2views("https://www.youtube.com/shorts/9NfoKkcYoaE")
 
     translated_video.check_video_type()
     translated_video.get_channel_name()
-    # translated_video.set_video_title()
-    # translated_video.set_video_description()
-    # translated_video.set_video_tags()
-    # translated_video.set_video_number(video_type)
-    # translated_video.download_video(video_type)
-    # translated_video.convert_video_to_audio(video_type)
-    # translated_video.transcribe_video(video_type)
-    # translated_video.count_video_length(video_type)
+    translated_video.set_video_title()
+    translated_video.set_video_description()
+    translated_video.set_video_tags()
+    translated_video.set_video_number()
+    translated_video.create_dropbox_video_folder()
+    # translated_video.download_video()
+    # translated_video.convert_video_to_audio()
+    # translated_video.transcribe_video()
+    # translated_video.count_video_length()
+    # translated_video.save_video_info()
     # translated_video.gdoc_set_doc_title()
     # translated_video.gdoc_set_script()
     # translated_video.check_video_type()
