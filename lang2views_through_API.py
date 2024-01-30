@@ -109,6 +109,7 @@ yt_video = {
         "thumbnail_path": "",
     },
     "VideoTrelloInfo": {
+        "trello_card_id": "",
         "DatePublished": "",
         "OriginalVideoLink": "",
         "VideoLength": "",
@@ -439,14 +440,17 @@ class Lang2views:
         #     separators=(",", ": "),
         # )
 
-        print(json.loads(response.text)[0])
+        self.original_video = json.loads(response.text)[1]["id"]
 
-    def trello_update_custom_field():
+    def trello_update_custom_field(self):
         url = (
             "https://api.trello.com/1/cards/"
-            + yt_video["YouTubeVideoInfo"]["trello_card_id"]
-            + "/customField/64ca69028b331b036679c2ab/item"
+            + "65b80d031a5e0c9bcdc9b26e"
+            + "/customField/"
+            + self.original_video
+            + "/item"
         )
+        print(url)
 
         headers = {"Content-Type": "application/json"}
 
@@ -455,14 +459,12 @@ class Lang2views:
             "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
         }
 
-        payload = json.dumps(
-            {"value": {"text": yt_video["YouTubeVideoInfo"]["script_url"]}}
-        )
+        payload = json.dumps({"value": {"text": "Testing"}})
 
         response = requests.request(
             "PUT", url, data=payload, headers=headers, params=query
         )
-        print(response.text)
+        print(response)
 
 
 def main():
@@ -470,7 +472,6 @@ def main():
     document_id = ""
     all_in_same_socument = ""
     translated_video = Lang2views("https://www.youtube.com/shorts/9NfoKkcYoaE")
-
     translated_video.check_video_type()
     translated_video.get_channel_name()
     # translated_video.set_video_title()
@@ -488,6 +489,7 @@ def main():
     # translated_video.check_video_type()
     # translated_video.trello_create_from_template()
     translated_video.trello_get_card_info()
+    translated_video.trello_update_custom_field()
     # print(yt_video)
 
 
