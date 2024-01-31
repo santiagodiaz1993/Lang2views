@@ -110,10 +110,10 @@ yt_video = {
     },
     "VideoTrelloInfo": {
         "trello_card_id": "",
-        "DatePublished": "",
-        "OriginalVideoLink": "",
-        "VideoLength": "",
-        "TranslatedScript": "",
+        "date_published": "",
+        "original_video_link": "",
+        "video_length": "",
+        "translated_Script": "",
     },
 }
 
@@ -251,7 +251,7 @@ class Lang2views:
             path
             + yt_video["YouTubeVideoInfo"]["video_number"]
             + ". "
-            + yt_video["title"],
+            + yt_video["YouTubeVideoInfo"]["title"],
         )
         # os.popen(
         #     'cp -r "'
@@ -431,7 +431,7 @@ class Lang2views:
         }
 
         response = requests.request("GET", url, headers=headers, params=query)
-        # print(response)
+        print(response.text)
 
         # response = json.dumps(
         #     json.loads(response.text),
@@ -440,31 +440,54 @@ class Lang2views:
         #     separators=(",", ": "),
         # )
 
+        self.date_published = json.loads(response.text)[0]["id"]
         self.original_video = json.loads(response.text)[1]["id"]
+        self.video_length = json.loads(response.text)[2]["id"]
+        self.translated_script = json.loads(response.text)[5]["id"]
 
     def trello_update_custom_field(self):
-        url = (
-            "https://api.trello.com/1/cards/"
-            + "65b80d031a5e0c9bcdc9b26e"
-            + "/customField/"
-            + self.original_video
-            + "/item"
-        )
-        print(url)
-
-        headers = {"Content-Type": "application/json"}
-
-        query = {
-            "key": "507e54976cbef96c4b8e1b5b883f4639",
-            "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+        custome_fields = {
+            "date_published": {self.date_published, "Jan 10 at 12:00PM"},
+            "original_video": {
+                self.original_video,
+                yt_video["YouTubeVideoInfo"]["video_url"],
+            },
+            "video_length": {
+                self.video_length,
+                yt_video["YouTubeVideoInfo"]["video_length"],
+            },
+            "translated_script": {
+                self.translated_script,
+                yt_video["YouTubeVideoInfo"]["script_url"],
+            },
         }
 
-        payload = json.dumps({"value": {"text": "Testing"}})
+        for custom_field in custome_fields:
+            for element in custom_field:
+                print(custom_field)
+                print(element)
+            url = (
+                "https://api.trello.com/1/cards/"
+                + "65b80d031a5e0c9bcdc9b26e"
+                + "/customField/"
+                + custom_field
+                + "/item"
+            )
 
-        response = requests.request(
-            "PUT", url, data=payload, headers=headers, params=query
-        )
-        print(response)
+            headers = {"Content-Type": "application/json"}
+
+            query = {
+                "key": "507e54976cbef96c4b8e1b5b883f4639",
+                "token": "ATTAc46e0dc1e8b73744994a0538e89bf048d7a1ea0f6a515563a839233e7abdeeb7635B82D5",
+            }
+
+            payload = json.dumps(
+                {"value": {"text": yt_video["YouTubeVideoInfo"]["video_url"]}}
+            )
+
+            response = requests.request(
+                "PUT", url, data=payload, headers=headers, params=query
+            )
 
 
 def main():
@@ -472,8 +495,8 @@ def main():
     document_id = ""
     all_in_same_socument = ""
     translated_video = Lang2views("https://www.youtube.com/shorts/9NfoKkcYoaE")
-    translated_video.check_video_type()
-    translated_video.get_channel_name()
+    # translated_video.check_video_type()
+    # translated_video.get_channel_name()
     # translated_video.set_video_title()
     # translated_video.set_video_description()
     # translated_video.set_video_tags()
