@@ -389,7 +389,7 @@ class Lang2views:
 
         response = requests.request("POST", url, params=query)
 
-        print(response.text)
+        # print(response.text)
 
     def trello_create_from_template(self):
         # def clone_trello_card(name, list_id, card_id):
@@ -408,7 +408,7 @@ class Lang2views:
         }
 
         response = requests.request("POST", url, headers=headers, params=query)
-        print(json.loads(response.text))
+        # print(json.loads(response.text))
         yt_video["YouTubeVideoInfo"]["trello_card_id"] = json.loads(response.text)["id"]
 
     def trello_get_card_info(self):
@@ -446,31 +446,36 @@ class Lang2views:
         self.translated_script = json.loads(response.text)[5]["id"]
 
     def trello_update_custom_field(self):
-        custome_fields = {
-            "date_published": {self.date_published, "Jan 10 at 12:00PM"},
+        custom_fields = {
+            "date_published": {
+                "id": self.date_published,
+                "value": "Jan 10 at 12:00PM",
+            },
             "original_video": {
-                self.original_video,
-                yt_video["YouTubeVideoInfo"]["video_url"],
+                "id": self.original_video,
+                "value": yt_video["YouTubeVideoInfo"]["video_url"],
             },
             "video_length": {
-                self.video_length,
-                yt_video["YouTubeVideoInfo"]["video_length"],
+                "id": self.video_length,
+                "value": yt_video["YouTubeVideoInfo"]["video_length"],
             },
             "translated_script": {
-                self.translated_script,
-                yt_video["YouTubeVideoInfo"]["script_url"],
+                "id": self.translated_script,
+                "value": yt_video["YouTubeVideoInfo"]["script_url"],
             },
         }
 
-        for custom_field in custome_fields:
-            for element in custom_field:
-                print(custom_field)
-                print(element)
+        for custom_field in custom_fields:
+            print(custom_field)
+            print(custom_fields[custom_field]["id"])
+            print(custom_fields[custom_field]["value"])
+
+            # print(custom_field.values()[1])
             url = (
                 "https://api.trello.com/1/cards/"
-                + "65b80d031a5e0c9bcdc9b26e"
+                + yt_video["YouTubeVideoInfo"]["trello_card_id"]
                 + "/customField/"
-                + custom_field
+                + custom_fields[custom_field]["id"]
                 + "/item"
             )
 
@@ -482,7 +487,7 @@ class Lang2views:
             }
 
             payload = json.dumps(
-                {"value": {"text": yt_video["YouTubeVideoInfo"]["video_url"]}}
+                {"value": {"text": custom_fields[custom_field]["value"]}}
             )
 
             response = requests.request(
@@ -494,26 +499,26 @@ def main():
 
     document_id = ""
     all_in_same_socument = ""
-    translated_video = Lang2views("https://www.youtube.com/shorts/9NfoKkcYoaE")
-    # translated_video.check_video_type()
-    # translated_video.get_channel_name()
-    # translated_video.set_video_title()
-    # translated_video.set_video_description()
-    # translated_video.set_video_tags()
-    # translated_video.set_video_number()
-    # translated_video.create_dropbox_video_folder()
-    # translated_video.download_video()
-    # translated_video.convert_video_to_audio()
-    # translated_video.transcribe_video()
-    # translated_video.count_video_length()
-    # translated_video.save_video_info()
-    # translated_video.gdoc_set_doc_title()
-    # translated_video.gdoc_set_script()
-    # translated_video.check_video_type()
-    # translated_video.trello_create_from_template()
+    translated_video = Lang2views("https://www.youtube.com/shorts/NG4aMelgPec")
+    translated_video.check_video_type()
+    translated_video.get_channel_name()
+    translated_video.set_video_title()
+    translated_video.set_video_description()
+    translated_video.set_video_tags()
+    translated_video.set_video_number()
+    translated_video.create_dropbox_video_folder()
+    translated_video.download_video()
+    translated_video.convert_video_to_audio()
+    translated_video.transcribe_video()
+    translated_video.count_video_length()
+    translated_video.save_video_info()
+    translated_video.gdoc_set_doc_title()
+    translated_video.gdoc_set_script()
+    translated_video.check_video_type()
+    translated_video.trello_create_from_template()
     translated_video.trello_get_card_info()
     translated_video.trello_update_custom_field()
-    # print(yt_video)
+    print(yt_video)
 
 
 if __name__ == "__main__":
